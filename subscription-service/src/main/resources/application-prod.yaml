@@ -3,4 +3,4 @@ spring:
     name: subscription-service
 
   config:
-    import: "optional:configserver:http://configiration-service:8888"
+    import: "optional:configserver:http://configuration-service:8888"
