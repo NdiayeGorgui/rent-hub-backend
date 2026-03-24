@@ -1,5 +1,10 @@
+version: "3.9"
+
 services:
 
+  # ========================
+  # 🟡 KAFKA
+  # ========================
   kafka:
     image: apache/kafka:3.7.0
     container_name: kafka
@@ -9,26 +14,130 @@ services:
     volumes:
       - kafka_data:/var/lib/kafka/data
     environment:
-      # ===== KRaft =====
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-
-      # ⚠️ ID VALIDE (22 chars)
       KAFKA_CLUSTER_ID: q1Sh-9_ISia_zwGINzRvyQ
-
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
 
-      # ===== LISTENERS =====
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
 
-      # ===== DEV =====
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  # ========================
+  # 🔵 EUREKA
+  # ========================
+  eureka-registry:
+    image: gorgui/eureka-registry:latest
+    ports:
+      - "8761:8761"
+
+  # ========================
+  # ⚙️ CONFIG SERVER
+  # ========================
+  configuration-service:
+    image: gorgui/configuration-service:latest
+    depends_on:
+      - eureka-registry
+    ports:
+      - "8888:8888"
+
+  # ========================
+  # 🚪 API GATEWAY
+  # ========================
+  api-gateway:
+    image: gorgui/api-gateway:latest
+    depends_on:
+      - eureka-registry
+      - configuration-service
+    ports:
+      - "8080:8080"
+
+  # ========================
+  # 🔐 AUTH
+  # ========================
+  auth-service:
+    image: gorgui/auth-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  # ========================
+  # 🧾 AUCTION
+  # ========================
+  auction-service:
+    image: gorgui/auction-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  # ========================
+  # 📦 ITEM
+  # ========================
+  item-service:
+    image: gorgui/item-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  # ========================
+  # 💳 PAYMENT
+  # ========================
+  payments-service:
+    image: gorgui/payments-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  # ========================
+  # 🔔 NOTIFICATION
+  # ========================
+  notif-service:
+    image: gorgui/notif-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  # ========================
+  # 💬 MESSAGING
+  # ========================
+  messaging-service:
+    image: gorgui/messaging-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  # ========================
+  # 📦 AUTRES SERVICES
+  # ========================
+  dispute-service:
+    image: gorgui/dispute-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  rental-service:
+    image: gorgui/rental-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  review-service:
+    image: gorgui/review-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
+
+  subscription-service:
+    image: gorgui/subscription-service:latest
+    depends_on:
+      - eureka-registry
+      - kafka
 
 volumes:
   kafka_data:
