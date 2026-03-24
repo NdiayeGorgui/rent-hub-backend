@@ -1,0 +1,56 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: notif-service
+
+  config:
+    import: optional:configserver:http://localhost:8888
+
+  # ======================
+  # Kafka
+  # ======================
+  kafka:
+    consumer:
+      group-id: notif-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.smartiadev.base_domain_service.dto
+        spring.json.use.type.headers: true
+
+  # ======================
+  # (OPTIONNEL) DB
+  # uniquement si tu veux persister les notifications
+  # ======================
+  datasource:
+    url: jdbc:postgresql://localhost:5432/smartiadev_db
+    username: postgres
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+# ======================
+# Eureka
+# ======================
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+jwt:
+  secret: HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
+  expiration: 86400000
+
+# ======================
+# Logging (utile au début)
+# ======================
+logging:
+  level:
+    org.springframework.kafka: INFO
+    com.smartiadev.notif_service: DEBUG
