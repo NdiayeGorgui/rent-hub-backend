@@ -1,6 +1,7 @@
 package com.smartiadev.api_gateway.security;
 
 import io.jsonwebtoken.io.Decoders;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +24,7 @@ import java.util.List;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    @Value("${jwt.secret}")
+    @Value("${JWT_SECRET}")
     private String jwtSecret;
 
     @Bean
@@ -147,5 +148,13 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", config);
 
         return source;
+    }
+
+
+
+    @PostConstruct
+    public void init() {
+        System.out.println("JWT SECRET = " + jwtSecret);
+        System.out.println("JWT SECRET LENGTH = " + (jwtSecret != null ? jwtSecret.length() : "NULL"));
     }
 }

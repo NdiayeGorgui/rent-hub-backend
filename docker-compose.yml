@@ -66,6 +66,8 @@ services:
   # 🚪 API GATEWAY
   # ========================
   api-gateway:
+    environment:
+      - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
     image: gorgui/api-gateway:latest
     depends_on:
       - eureka-registry
