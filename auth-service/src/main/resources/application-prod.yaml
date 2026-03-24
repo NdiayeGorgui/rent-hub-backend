@@ -3,4 +3,4 @@ spring:
     name: auth-service
 
   config:
-    import: "optional:configserver:http://configiration-service:8080"
+    import: "optional:configserver:http://configiration-service:8888"
