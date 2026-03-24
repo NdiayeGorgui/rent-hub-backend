@@ -3,6 +3,21 @@ version: "3.9"
 services:
 
   # ========================
+  # 🟢 POSTGRES
+  # ========================
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: renthub_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ========================
   # 🟡 KAFKA
   # ========================
   kafka:
@@ -65,7 +80,9 @@ services:
     image: gorgui/auth-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   # ========================
   # 🧾 AUCTION
@@ -74,7 +91,9 @@ services:
     image: gorgui/auction-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   # ========================
   # 📦 ITEM
@@ -83,7 +102,9 @@ services:
     image: gorgui/item-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   # ========================
   # 💳 PAYMENT
@@ -92,7 +113,9 @@ services:
     image: gorgui/payments-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   # ========================
   # 🔔 NOTIFICATION
@@ -101,7 +124,9 @@ services:
     image: gorgui/notif-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   # ========================
   # 💬 MESSAGING
@@ -110,7 +135,9 @@ services:
     image: gorgui/messaging-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   # ========================
   # 📦 AUTRES SERVICES
@@ -119,25 +146,34 @@ services:
     image: gorgui/dispute-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   rental-service:
     image: gorgui/rental-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   review-service:
     image: gorgui/review-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
   subscription-service:
     image: gorgui/subscription-service:latest
     depends_on:
       - eureka-registry
+      - configuration-service
       - kafka
+      - postgres
 
 volumes:
   kafka_data:
+  postgres_data:
