@@ -1,19 +1,23 @@
+server:
+  port: 8888
+
 spring:
   application:
     name: configuration-service
+
+  config:
+    import: ""   # 🔥 CRITIQUE (désactive client)
 
   cloud:
     discovery:
       enabled: true
     config:
+      enabled: false   # 🔥 empêche mode client
       server:
         git:
           uri: https://github.com/NdiayeGorgui/rent-hub-config-server
           clone-on-start: true
           default-label: main
-
-server:
-  port: 8888
 
 eureka:
   instance:
@@ -27,6 +31,3 @@ management:
     web:
       exposure:
         include: "*"
-  endpoint:
-    health:
-      show-details: always
