@@ -6,13 +6,13 @@ spring:
     name: configuration-service
 
   config:
-    import: ""   # 🔥 CRITIQUE (désactive client)
+    import: ""
 
   cloud:
     discovery:
       enabled: true
     config:
-      enabled: false   # 🔥 empêche mode client
+      enabled: false
       server:
         git:
           uri: https://github.com/NdiayeGorgui/rent-hub-config-server
