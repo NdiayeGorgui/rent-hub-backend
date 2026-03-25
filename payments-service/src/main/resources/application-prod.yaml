@@ -1,6 +1,0 @@
-spring:
-  application:
-    name: payments-service
-
-  config:
-    import: "optional:configserver:http://configuration-service:8888"

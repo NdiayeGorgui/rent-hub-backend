@@ -84,15 +84,18 @@ services:
       - "8888:8888"
     environment:
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      - SPRING_CONFIG_IMPORT=optional:file:./
+      - SPRING_APPLICATION_NAME=configuration-service
     depends_on:
       eureka-registry:
         condition: service_healthy
     networks:
       - my_network
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1"]
-      interval: 10s
-      timeout: 5s
+      test: [ "CMD-SHELL", "timeout 3 bash -c 'cat < /dev/null > /dev/tcp/localhost/8888' || exit 1" ]
+      interval: 15s
+      timeout: 10s
       retries: 10
       start_period: 40s
 
@@ -107,7 +110,7 @@ services:
     environment:
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       eureka-registry:
         condition: service_healthy
@@ -160,7 +163,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
@@ -188,7 +191,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
@@ -216,7 +219,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
@@ -244,7 +247,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
@@ -272,7 +275,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
@@ -300,7 +303,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
@@ -328,7 +331,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
@@ -356,7 +359,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
@@ -384,7 +387,7 @@ services:
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
       postgres:
         condition: service_healthy
