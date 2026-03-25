@@ -39,7 +39,7 @@ services:
       KAFKA_CLUSTER_ID: q1Sh-9_ISia_zwGINzRvyQ
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -48,11 +48,6 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     networks:
       - my_network
-    healthcheck:
-      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
 
   # ========================
   # 🔵 EUREKA
@@ -65,10 +60,10 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   # ========================
   # ⚙️ CONFIG SERVER
@@ -86,10 +81,10 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   # ========================
   # 🚪 API GATEWAY
@@ -125,17 +120,18 @@ services:
       - SPRING_DATASOURCE_PASSWORD=password
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
+      - JWT_EXPIRATION=86400000
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -158,12 +154,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -186,12 +182,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -214,12 +210,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -242,12 +238,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -270,12 +266,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -298,12 +294,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -326,12 +322,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -354,12 +350,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 
@@ -382,12 +378,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      kafka:
-        condition: service_healthy
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - my_network
 

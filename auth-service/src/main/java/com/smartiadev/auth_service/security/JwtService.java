@@ -16,10 +16,10 @@ import java.util.List;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
+    @Value("${JWT_SECRET}")
     private String secret;
 
-    @Value("${jwt.expiration}")
+    @Value("${JWT_EXPIRATION}")
     private long expiration;
 
     private Key getSigningKey() {
