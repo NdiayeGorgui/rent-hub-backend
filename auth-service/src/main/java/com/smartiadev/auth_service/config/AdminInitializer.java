@@ -1,3 +1,4 @@
+/*
 package com.smartiadev.auth_service.config;
 
 import com.smartiadev.auth_service.entity.User;
@@ -44,3 +45,4 @@ public class AdminInitializer {
         System.out.println("🚀 Admin account created: admin@renthub.com / Admin@123");
     }
 }
+*/

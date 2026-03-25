@@ -1,275 +1,390 @@
+services:
 
-  services:
+  # ========================
+  # 🟢 POSTGRES
+  # ========================
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    environment:
+      POSTGRES_DB: renthub_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-    # ========================
-    # 🟢 POSTGRES
-    # ========================
-    postgres:
-      container_name: postgres
-      image: postgres:15
-      environment:
-        POSTGRES_DB: renthub_db
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: password
-      ports:
-        - "5432:5432"
-      volumes:
-        - postgres_data:/var/lib/postgresql/data
-      networks:
-        - my_network
+  # ========================
+  # 🟡 KAFKA
+  # ========================
+  kafka:
+    container_name: kafka
+    image: apache/kafka:3.7.0
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CLUSTER_ID: q1Sh-9_ISia_zwGINzRvyQ
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
 
-    # ========================
-    # 🟡 KAFKA
-    # ========================
-    kafka:
-      container_name: kafka
-      image: apache/kafka:3.7.0
-      hostname: kafka
-      ports:
-        - "9092:9092"
-      volumes:
-        - kafka_data:/var/lib/kafka/data
-      environment:
-        KAFKA_NODE_ID: 1
-        KAFKA_PROCESS_ROLES: broker,controller
-        KAFKA_CLUSTER_ID: q1Sh-9_ISia_zwGINzRvyQ
-        KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+  # ========================
+  # 🔵 EUREKA
+  # ========================
+  eureka-registry:
+    container_name: eureka-registry
+    image: gorgui/eureka-registry:latest
+    ports:
+      - "8761:8761"
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-        KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-        KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+  # ========================
+  # ⚙️ CONFIG SERVER
+  # ========================
+  configuration-service:
+    container_name: configuration-service
+    image: gorgui/configuration-service:latest
+    ports:
+      - "8888:8888"
+    environment:
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+    depends_on:
+      eureka-registry:
+        condition: service_healthy
+    networks:
+      - my_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-        KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      networks:
-        - my_network
+  # ========================
+  # 🚪 API GATEWAY
+  # ========================
+  api-gateway:
+    container_name: api-gateway
+    image: gorgui/api-gateway:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    # ========================
-    # 🔵 EUREKA
-    # ========================
-    eureka-registry:
-      container_name: eureka-registry
-      image: gorgui/eureka-registry:latest
-      ports:
-        - "8761:8761"
-      networks:
-        - my_network
+  # ========================
+  # 🔐 AUTH SERVICE
+  # ========================
+  auth-service:
+    container_name: auth-service
+    image: gorgui/auth-service:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    # ========================
-    # ⚙️ CONFIG SERVER
-    # ========================
-    configuration-service:
-      container_name: configuration-service
-      image: gorgui/configuration-service:latest
-      ports:
-        - "8888:8888"
-      environment:
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-      depends_on:
-        - eureka-registry
-      networks:
-        - my_network
+  # ========================
+  # 🧾 AUCTION SERVICE
+  # ========================
+  auction-service:
+    container_name: auction-service
+    image: gorgui/auction-service:latest
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    # ========================
-    # 🚪 API GATEWAY
-    # ========================
-    api-gateway:
-      container_name: api-gateway
-      image: gorgui/api-gateway:latest
-      ports:
-        - "8080:8080"
-      environment:
-        - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
-      depends_on:
-        - eureka-registry
-        - configuration-service
-      networks:
-        - my_network
+  # ========================
+  # 📦 ITEM SERVICE
+  # ========================
+  item-service:
+    container_name: item-service
+    image: gorgui/item-service:latest
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    # ========================
-    # 🔐 AUTH SERVICE
-    # ========================
-    auth-service:
-      container_name: auth-service
-      image: gorgui/auth-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888
-      depends_on:
-        - postgres
-        - kafka
-        - eureka-registry
-        - configuration-service
-      networks:
-        - my_network
+  # ========================
+  # 💳 PAYMENTS SERVICE
+  # ========================
+  payments-service:
+    container_name: payments-service
+    image: gorgui/payments-service:latest
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    # ========================
-    # 🧾 SERVICES (template)
-    # ========================
-    auction-service:
-      container_name: auction-service
-      image: gorgui/auction-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888/
-      depends_on:
-        - postgres
-        - kafka
-        - eureka-registry
-        - configuration-service
-      networks:
-        - my_network
+  # ========================
+  # 🔔 NOTIF SERVICE
+  # ========================
+  notif-service:
+    container_name: notif-service
+    image: gorgui/notif-service:latest
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    item-service:
-      container_name: item-service
-      image: gorgui/item-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888/
-      depends_on:
-        - postgres
-        - kafka
-        - eureka-registry
-        - configuration-service
-      networks:
-        - my_network
+  # ========================
+  # ⚖️ DISPUTE SERVICE
+  # ========================
+  dispute-service:
+    container_name: dispute-service
+    image: gorgui/dispute-service:latest
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    payments-service:
-      container_name: payments-service
-      image: gorgui/payments-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888/
-      depends_on:
-        - postgres
-        - kafka
-        - eureka-registry
-        - configuration-service
-      networks:
-        - my_network
+  # ========================
+  # 🏠 RENTAL SERVICE
+  # ========================
+  rental-service:
+    container_name: rental-service
+    image: gorgui/rental-service:latest
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    notif-service:
-      container_name: notif-service
-      image: gorgui/notif-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888/
-      depends_on:
-        - postgres
-        - kafka
-        - eureka-registry
-        - configuration-service
-      networks:
-        - my_network
+  # ========================
+  # ⭐ REVIEW SERVICE
+  # ========================
+  review-service:
+    container_name: review-service
+    image: gorgui/review-service:latest
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    # ========================
-    # 📦 AUTRES SERVICES
-    # ========================
-    dispute-service:
-      container_name: dispute-service
-      image: gorgui/dispute-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888/
-      depends_on:
-        - eureka-registry
-        - configuration-service
-        - kafka
-        - postgres
-      networks:
-        - my_network
+  # ========================
+  # 📋 SUBSCRIPTION SERVICE
+  # ========================
+  subscription-service:
+    container_name: subscription-service
+    image: gorgui/subscription-service:latest
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
+  # ========================
+  # 💬 MESSAGING SERVICE
+  # ========================
+  messaging-service:
+    container_name: messaging-service
+    image: gorgui/messaging-service:latest
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      eureka-registry:
+        condition: service_healthy
+      configuration-service:
+        condition: service_healthy
+    networks:
+      - my_network
 
-    rental-service:
-      container_name: rental-service
-      image: gorgui/rental-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888/
-      depends_on:
-        - eureka-registry
-        - configuration-service
-        - kafka
-        - postgres
-      networks:
-        - my_network
+volumes:
+  kafka_data:
+  postgres_data:
 
-
-    review-service:
-      container_name: review-service
-      image: gorgui/review-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888/
-      depends_on:
-        - eureka-registry
-        - configuration-service
-        - kafka
-        - postgres
-      networks:
-        - my_network
-
-
-    subscription-service:
-      container_name: subscription-service
-      image: gorgui/subscription-service:latest
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=password
-        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-        - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
-        - SPRING_CONFIG_IMPORT=configserver:http://configuration-service:8888/
-      depends_on:
-        - eureka-registry
-        - configuration-service
-        - kafka
-        - postgres
-      networks:
-        - my_network
-
-  volumes:
-    kafka_data:
-    postgres_data:
-
-  networks:
-    my_network:
-      driver: bridge
-
+networks:
+  my_network:
+    driver: bridge
