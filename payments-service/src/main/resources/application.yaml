@@ -1,9 +1,62 @@
+server:
+  port: 8087
+
 spring:
   application:
     name: payments-service
-
   config:
-    import: "optional:configserver:http://configuration-service:8888"
+    import: optional:configserver:http://configuration-service:8888
 
-server:
-  port: 8087
+  # ======================
+  # Kafka
+  # ======================
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: true
+
+    consumer:
+      group-id: payment-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.smartiadev.base_domain_service.dto
+        spring.json.use.type.headers: true
+
+  # ======================
+  # (OPTIONNEL) DB
+  # uniquement si tu veux persister les notifications
+  # ======================
+  datasource:
+    url: jdbc:postgresql://postgres:5432/renthub_db
+    username: postgres
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+# ======================
+# Eureka
+# ======================
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-registry:8761/eureka/
+
+jwt:
+  secret: HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
+  expiration: 86400000
+
+# ======================
+# Logging (utile au début)
+# ======================
+logging:
+  level:
+    org.springframework.kafka: INFO
+    com.smartiadev.notif_service: DEBUG
