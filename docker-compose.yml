@@ -45,7 +45,7 @@ services:
 
       # ===== LISTENERS =====
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
 
@@ -97,7 +97,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 10
-      start_period: 40s
+      start_period: 60s
 
   # ========================
   # 🚪 API GATEWAY
@@ -128,9 +128,14 @@ services:
     ports:
       - "8081:8081"
     environment:
+      - SERVER_PORT=8081
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
+      - SPRING_SQL_INIT_MODE=never
+      - SPRING_DATASOURCE_INITIALIZATION_MODE=never
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db?currentSchema=auth_schema
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - JWT_EXPIRATION=86400000

@@ -17,8 +17,8 @@ public class SubscriptionRenewalJob {
     private final SubscriptionRepository repository;
     private final SubscriptionEventPublisher publisher;
 
-    //@Scheduled(cron = "0 0 2 * * *")
-   @Scheduled(cron = "0 06 11 * * *")
+    @Scheduled(cron = "0 0 2 * * *")
+   //@Scheduled(cron = "0 06 11 * * *")
     public void renewSubscriptions() {
 
         List<Subscription> expiring =

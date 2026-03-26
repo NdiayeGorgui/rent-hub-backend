@@ -54,7 +54,7 @@ public class SubscriptionService {
                 .userId(userId)
                 .status(SubscriptionStatus.ACTIVE)
                 .startDate(LocalDateTime.now())
-                .endDate(LocalDateTime.now().plusMonths(1))
+                .endDate(LocalDateTime.now().plusMonths(6))
                 .autoRenew(true)
                 .paymentRef(paymentRef)
                 .paymentId(paymentid)
@@ -70,8 +70,8 @@ public class SubscriptionService {
 
         sub.setEndDate(
                 sub.getEndDate().isBefore(LocalDateTime.now())
-                        ? LocalDateTime.now().plusMonths(1)
-                        : sub.getEndDate().plusMonths(1)
+                        ? LocalDateTime.now().plusMonths(6)
+                        : sub.getEndDate().plusMonths(6)
         );
         sub.setStatus(SubscriptionStatus.ACTIVE);
 
