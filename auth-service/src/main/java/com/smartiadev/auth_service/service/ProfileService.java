@@ -33,33 +33,34 @@ public class ProfileService {
    // @Cacheable(value = "user-profile", key = "#userId")
     //@CacheEvict(value = "user-profile", allEntries = true)
     public UserProfileDto getPublicProfile(UUID userId) {
-
-        // 1️⃣ USER (auth-service DB)
         User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 2️⃣ RÉPUTATION
-        Double rating =
-                reviewClient.getAverageRatingForUser(userId);
-        Long count =
-                reviewClient.getReviewsCountForUser(userId);
+        // Fallbacks si les services ne répondent pas
+        Double rating = 0.0;
+        Long count = 0L;
+        List<ItemSummaryDto> publishedItems = new ArrayList<>();
+        List<ItemSummaryDto> rentedItems = new ArrayList<>();
+        boolean isPremium = false;
+
+        try { rating = reviewClient.getAverageRatingForUser(userId); }
+        catch (Exception e) { /* log warn */ }
+
+        try { count = reviewClient.getReviewsCountForUser(userId); }
+        catch (Exception e) { /* log warn */ }
+
+        try { publishedItems = itemClient.getItemsPublishedByUser(userId); }
+        catch (Exception e) { /* log warn */ }
+
+        try { rentedItems = rentalClient.getRentalHistory(userId); }
+        catch (Exception e) { /* log warn */ }
+
+        try { isPremium = subscriptionClient.isPremium(userId); }
+        catch (Exception e) { /* log warn */ }
 
         Double safeRating = rating != null ? rating : 0.0;
         Long safeCount = count != null ? count : 0L;
-
         String badge = computeBadge(safeRating, safeCount);
-
-        // 3️⃣ HISTORIQUE
-        List<ItemSummaryDto> publishedItems =
-                itemClient.getItemsPublishedByUser(userId);
-
-        List<ItemSummaryDto> rentedItems =
-                rentalClient.getRentalHistory(userId);
-
-        boolean isPremium =
-                subscriptionClient.isPremium(userId);
-
 
         return UserProfileDto.builder()
                 .userId(user.getId())
