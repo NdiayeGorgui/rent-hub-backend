@@ -2,6 +2,7 @@ package com.smartiadev.auth_service.repository;
 
 import com.smartiadev.auth_service.entity.User;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotBlank;
 import org.hibernate.sql.results.graph.FetchList;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,6 +22,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Long countActiveUsers();
 
     List<User> findByRolesContaining(String role);
+
+    Optional<User> findByResetToken(String resetToken);
 
    /* @Modifying
     @Transactional

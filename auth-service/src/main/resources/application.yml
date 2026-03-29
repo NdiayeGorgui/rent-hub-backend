@@ -1,6 +1,17 @@
 spring:
   application:
     name: auth-service
+  mail:
+    host: mailhog
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
   config:
     import: "optional:configserver:http://configuration-service:8888"
   datasource:

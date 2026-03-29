@@ -58,6 +58,17 @@ services:
       - my_network
 
   # ========================
+  # 🔵 MAILHOG
+  # ========================
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # UI web
+    networks:
+      - my_network
+  # ========================
   # 🔵 EUREKA
   # ========================
   eureka-registry:
@@ -129,6 +140,8 @@ services:
       - "8081:8081"
     environment:
       - SERVER_PORT=8081
+      - SPRING_MAIL_HOST=mailhog
+      - SPRING_MAIL_PORT=1025
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password

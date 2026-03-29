@@ -1,5 +1,7 @@
 package com.smartiadev.auth_service.controller;
 
+import com.smartiadev.auth_service.dto.ForgotPasswordRequest;
+import com.smartiadev.auth_service.dto.ResetPasswordRequest;
 import com.smartiadev.auth_service.dto.request.LoginRequest;
 import com.smartiadev.auth_service.dto.request.RegisterRequest;
 import com.smartiadev.auth_service.dto.response.AuthResponse;
@@ -10,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,6 +57,20 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@RequestBody @Valid LoginRequest request) {
         return authService.login(request);
+    }
+
+    @Operation(summary = "Forgot password", description = "Sends a reset token to the user's email")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Void> forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Reset password", description = "Resets the password using the token received by email")
+    @PostMapping("/reset-password")
+    public ResponseEntity<Void> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok().build();
     }
 }
 

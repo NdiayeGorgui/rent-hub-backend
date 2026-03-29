@@ -40,6 +40,9 @@ public class User {
     private int auctionStrikes = 0;
     private boolean auctionRestricted = false;
 
+    private String resetToken;
+    private LocalDateTime resetTokenExpiry;
+
     private LocalDateTime createdAt;
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> roles;

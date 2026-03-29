@@ -1,8 +1,6 @@
 package com.smartiadev.auth_service.service;
 
-import com.smartiadev.auth_service.dto.AuctionStrikeResponse;
-import com.smartiadev.auth_service.dto.UserBidEligibilityResponse;
-import com.smartiadev.auth_service.dto.UserResponse;
+import com.smartiadev.auth_service.dto.*;
 import com.smartiadev.auth_service.dto.request.LoginRequest;
 import com.smartiadev.auth_service.dto.request.RegisterRequest;
 import com.smartiadev.auth_service.dto.response.AuthResponse;
@@ -14,6 +12,8 @@ import com.smartiadev.base_domain_service.dto.AuctionStrikeEvent;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,6 +31,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuctionEventPublisher auctionEventPublisher;
+    private final JavaMailSender mailSender;
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -161,5 +162,56 @@ public class AuthService {
                         user.getRoles()
                 ))
                 .toList();
+    }
+
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+
+        // On ne révèle pas si l'email existe ou non (sécurité)
+        User user = userRepository.findByEmail(request.email())
+                .orElse(null);
+
+        if (user == null) return;
+
+        String token = UUID.randomUUID().toString();
+        user.setResetToken(token);
+        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(15));
+        userRepository.save(user);
+
+        // Envoie le mail
+        SimpleMailMessage mail = new SimpleMailMessage();
+        mail.setTo(user.getEmail());
+        mail.setSubject("Réinitialisation de votre mot de passe - RentHub");
+        mail.setText(
+                "Bonjour " + user.getFullName() + ",\n\n" +
+                        "Vous avez demandé une réinitialisation de mot de passe.\n\n" +
+                        "Votre token de réinitialisation : " + token + "\n\n" +
+                        "Ce token expire dans 15 minutes.\n\n" +
+                        "Si vous n'avez pas fait cette demande, ignorez cet email.\n\n" +
+                        "L'équipe RentHub"
+        );
+        mailSender.send(mail);
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+
+        User user = userRepository.findByResetToken(request.token())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Token invalide ou expiré"
+                ));
+
+        if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Token expiré"
+            );
+        }
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+        userRepository.save(user);
     }
 }
