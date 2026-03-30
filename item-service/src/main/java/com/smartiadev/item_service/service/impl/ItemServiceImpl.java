@@ -18,10 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -683,5 +680,31 @@ public class ItemServiceImpl implements ItemService {
         item.setImageUrls(finalImages);
 
         repository.save(item);
+    }
+
+    @Override
+    public List<ItemSummaryWithDistanceDto> getNearbyItems(double lat, double lng, double radiusKm) {
+        return repository.findAll()
+                .stream()
+                .filter(item -> item.getLatitude() != null && item.getLongitude() != null)
+                .filter(item -> item.getStatus() == ItemStatus.ACTIVE)
+                .map(item -> {
+                    double distance = calculateDistance(lat, lng, item.getLatitude(), item.getLongitude());
+                    return new ItemSummaryWithDistanceDto(item, distance);
+                })
+                .filter(dto -> dto.getDistanceKm() <= radiusKm)
+                .sorted(Comparator.comparingDouble(ItemSummaryWithDistanceDto::getDistanceKm))
+                .collect(Collectors.toList());
+    }
+
+    private double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
+        final int R = 6371; // rayon de la Terre en km
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 }

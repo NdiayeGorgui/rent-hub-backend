@@ -53,4 +53,6 @@ public interface ItemService {
     List<AdminItemDto> findAllAdminItems();
 
     void updateItemWithImages(Long id, UUID userId, UpdateItemRequest dto, List<MultipartFile> files,  String existingImages);
+
+    List<ItemSummaryWithDistanceDto> getNearbyItems(double lat, double lng, double radiusKm);
 }

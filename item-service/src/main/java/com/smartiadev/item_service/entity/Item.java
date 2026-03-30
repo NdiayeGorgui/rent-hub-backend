@@ -75,6 +75,12 @@ public class Item {
     @Enumerated(EnumType.STRING)
     private ItemStatus status;
 
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     /**
      * Audit
      */

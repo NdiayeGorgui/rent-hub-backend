@@ -313,4 +313,14 @@ public class ItemController {
 
         return ResponseEntity.ok().build();
     }
+
+    // ItemController.java
+    @GetMapping("/nearby")
+    public List<ItemSummaryWithDistanceDto> getNearbyItems(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "10") double radiusKm
+    ) {
+        return service.getNearbyItems(lat, lng, radiusKm);
+    }
 }
