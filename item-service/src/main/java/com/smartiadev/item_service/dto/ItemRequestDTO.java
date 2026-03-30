@@ -27,6 +27,8 @@ public class ItemRequestDTO {
 
     @NotBlank
     private String city;
+    private Double latitude;
+    private Double longitude;
 
     private String address;
 

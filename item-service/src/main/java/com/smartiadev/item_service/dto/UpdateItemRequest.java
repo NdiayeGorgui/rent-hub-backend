@@ -7,6 +7,8 @@ public record UpdateItemRequest(
         Long categoryId,
         String description,
         String city,
+        Double latitude,
+        Double longitude,
         String address,
         Double pricePerDay,
         String type,

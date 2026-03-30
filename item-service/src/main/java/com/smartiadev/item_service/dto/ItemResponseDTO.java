@@ -22,6 +22,8 @@ public class ItemResponseDTO {
     private ItemType type;
     private Double pricePerDay;
     private String city;
+    private Double latitude;
+    private Double longitude;
     private String address;
     private List<String> imageUrls;
     private Boolean active;

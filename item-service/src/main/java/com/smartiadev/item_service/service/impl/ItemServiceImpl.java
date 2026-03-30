@@ -8,6 +8,7 @@ import com.smartiadev.item_service.entity.ItemStatus;
 import com.smartiadev.item_service.entity.ItemType;
 import com.smartiadev.item_service.repository.ItemRepository;
 import com.smartiadev.item_service.repository.specification.ItemSpecifications;
+import com.smartiadev.item_service.service.GeocodingService;
 import com.smartiadev.item_service.service.ImageStorageService;
 import com.smartiadev.item_service.service.ItemService;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,6 +35,7 @@ public class ItemServiceImpl implements ItemService {
     private final ImageStorageService imageStorageService;
     private static final String ITEM_SERVICE_BASE_URL = "http://localhost:8080"; // gateway
     private final ObjectMapper objectMapper;
+    private final GeocodingService geocodingService;
     /* =====================
        CREATE ITEM
        ===================== */
@@ -174,6 +176,8 @@ public class ItemServiceImpl implements ItemService {
                 item.getType(),
                 item.getPricePerDay(),
                 item.getCity(),
+                item.getLatitude(),
+                item.getLongitude(),
                 item.getAddress(),
                 item.getImageUrls(),
                 item.getActive(),
@@ -514,7 +518,17 @@ public class ItemServiceImpl implements ItemService {
             itemStatus = ItemStatus.ACTIVE;
             active = true;
         }
+// Si le front n'envoie pas les coordonnées, on géocode automatiquement
+        Double lat = dto.getLatitude();
+        Double lng = dto.getLongitude();
 
+        if (lat == null || lng == null) {
+            double[] coords = geocodingService.getCoordinates(dto.getCity(), dto.getAddress());
+            if (coords != null) {
+                lat = coords[0];
+                lng = coords[1];
+            }
+        }
         Item item = Item.builder()
                 .ownerId(ownerId)
                 .title(dto.getTitle())
@@ -523,6 +537,8 @@ public class ItemServiceImpl implements ItemService {
                 .type(dto.getType())
                 .pricePerDay(dto.getPricePerDay())
                 .city(dto.getCity())
+                .latitude(dto.getLatitude())
+                .longitude(dto.getLongitude())
                 .address(dto.getAddress())
                 .imageUrls(imageUrls)
                 .status(itemStatus)
@@ -640,6 +656,8 @@ public class ItemServiceImpl implements ItemService {
         if (dto.categoryId() != null) item.setCategoryId(dto.categoryId());
         if (dto.city() != null) item.setCity(dto.city());
         if (dto.address() != null) item.setAddress(dto.address());
+        if (dto.latitude() != null) item.setLatitude(dto.latitude());
+        if (dto.longitude() != null) item.setLongitude(dto.longitude());
         if (dto.pricePerDay() != null) item.setPricePerDay(dto.pricePerDay());
 
         if (dto.type() != null) {
@@ -648,6 +666,21 @@ public class ItemServiceImpl implements ItemService {
                 throw new IllegalStateException("Premium required for auction");
             }
             item.setType(ItemType.valueOf(dto.type()));
+        }
+
+        if (dto.latitude() != null) item.setLatitude(dto.latitude());
+        if (dto.longitude() != null) item.setLongitude(dto.longitude());
+
+// Si city ou address modifiée et pas de coords fournies → regéocoder
+        if ((dto.city() != null || dto.address() != null)
+                && dto.latitude() == null && dto.longitude() == null) {
+            String city = dto.city() != null ? dto.city() : item.getCity();
+            String address = dto.address() != null ? dto.address() : item.getAddress();
+            double[] coords = geocodingService.getCoordinates(city, address);
+            if (coords != null) {
+                item.setLatitude(coords[0]);
+                item.setLongitude(coords[1]);
+            }
         }
 
         // =========================
