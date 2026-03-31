@@ -3,10 +3,7 @@ package com.smartiadev.dispute_service.service;
 import com.smartiadev.base_domain_service.dto.DisputeCreatedEvent;
 import com.smartiadev.base_domain_service.dto.ItemDeactivatedEvent;
 import com.smartiadev.base_domain_service.dto.UserSuspendedEvent;
-import com.smartiadev.dispute_service.client.AuthClient;
-import com.smartiadev.dispute_service.client.ItemClient;
-import com.smartiadev.dispute_service.client.PaymentClient;
-import com.smartiadev.dispute_service.client.RentalClient;
+import com.smartiadev.dispute_service.client.*;
 import com.smartiadev.dispute_service.dto.CreateDisputeRequest;
 import com.smartiadev.dispute_service.dto.DisputeDto;
 import com.smartiadev.dispute_service.dto.PaymentResponse;
@@ -33,58 +30,97 @@ public class DisputeService {
     private final AuthClient authClient;
     private final DisputeEventProducer eventProducer;
     private final PaymentClient paymentClient;
+    private final AuctionClient  auctionClient;
 
 
     @Transactional
     public DisputeDto create(CreateDisputeRequest request, UUID userId) {
 
-        var rental = rentalClient.getRental(request.rentalId());
+        // ── CAS LOCATION ──────────────────────────────────────
+        if (request.rentalId() != null) {
 
-        if (!"ENDED".equals(rental.status())) {
-            throw new IllegalStateException("Rental not ended");
+            var rental = rentalClient.getRental(request.rentalId());
+
+            if (!"ENDED".equals(rental.status())) {
+                throw new IllegalStateException("Rental not ended");
+            }
+
+            if (!userId.equals(rental.ownerId())
+                    && !userId.equals(rental.renterId())) {
+                throw new IllegalStateException("Forbidden");
+            }
+
+            if (repository.existsByRentalId(request.rentalId())) {
+                throw new IllegalStateException("Dispute already exists for this rental");
+            }
+
+            UUID reported = userId.equals(rental.ownerId())
+                    ? rental.renterId()
+                    : rental.ownerId();
+
+            Dispute dispute = Dispute.builder()
+                    .rentalId(rental.id())
+                    .itemId(rental.itemId())
+                    .openedBy(userId)
+                    .reportedUserId(reported)
+                    .reason(request.reason())
+                    .description(request.description())
+                    .status(DisputeStatus.OPEN)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            return saveAndNotify(dispute);
         }
 
-        if (!userId.equals(rental.ownerId())
-                && !userId.equals(rental.renterId())) {
-            throw new IllegalStateException("Forbidden");
+        // ── CAS ENCHÈRE ───────────────────────────────────────
+        if (request.auctionId() != null) {
+
+            if (request.reportedUserId() == null) {
+                throw new IllegalArgumentException(
+                        "reportedUserId obligatoire pour un litige d'enchère"
+                );
+            }
+
+            if (repository.existsByAuctionId(request.auctionId())) {
+                throw new IllegalStateException("Dispute already exists for this auction");
+            }
+
+            // Récupère l'itemId depuis auction-service
+            var auction = auctionClient.getAuction(request.auctionId());
+
+            Dispute dispute = Dispute.builder()
+                    .auctionId(request.auctionId())
+                    .itemId(auction.itemId())
+                    .openedBy(userId)
+                    .reportedUserId(request.reportedUserId())
+                    .reason(request.reason())
+                    .description(request.description())
+                    .status(DisputeStatus.OPEN)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+
+            return saveAndNotify(dispute);
         }
 
-        if (repository.existsByRentalId(request.rentalId())) {
-            throw new IllegalStateException("Dispute already exists");
-        }
+        throw new IllegalArgumentException("rentalId ou auctionId est obligatoire");
+    }
 
-        UUID reported =
-                userId.equals(rental.ownerId())
-                        ? rental.renterId()
-                        : rental.ownerId();
+    // ── Méthode commune save + kafka ──────────────────────────
+    private DisputeDto saveAndNotify(Dispute dispute) {
 
-        Dispute dispute = Dispute.builder()
-                .rentalId(rental.id())
-                .itemId(rental.itemId())
-                .openedBy(userId)
-                .reportedUserId(reported)
-                .reason(request.reason())
-                .description(request.description())
-                .status(DisputeStatus.OPEN)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        // sauvegarde
         Dispute saved = repository.save(dispute);
 
         var admins = authClient.getAdmins();
-
         if (admins == null || admins.isEmpty()) {
             throw new IllegalStateException("No admin available");
         }
-
         UUID adminId = admins.get(0).id();
 
-        // 🔔 publication de l'évènement Kafka
         eventProducer.disputeCreated(
                 new DisputeCreatedEvent(
                         saved.getId(),
                         saved.getRentalId(),
+                        saved.getAuctionId(),   // ← nouveau
                         saved.getItemId(),
                         adminId,
                         saved.getOpenedBy(),
@@ -171,6 +207,7 @@ public class DisputeService {
         return new DisputeDto(
                 d.getId(),
                 d.getRentalId(),
+                d.getAuctionId(),
                 d.getItemId(),
                 d.getOpenedBy(),
                 d.getReportedUserId(),

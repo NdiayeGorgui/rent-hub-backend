@@ -20,6 +20,7 @@ public class Auction {
     private Long version;
     private Long itemId;
     private UUID ownerId;
+    private UUID winnerId;
 
     private Double startPrice;
     private Double currentPrice;

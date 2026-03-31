@@ -179,6 +179,8 @@ public class AuctionService {
         return new AuctionDto(
                 a.getId(),
                 a.getItemId(),
+                a.getOwnerId(),
+                a.getWinnerId(),
                 a.getStartPrice(),
                 a.getCurrentPrice(),
                 participants,
@@ -205,19 +207,6 @@ public class AuctionService {
 
         return map(auction);
     }
-
-    /*@Transactional
-    public AuctionDto watchAuction(Long auctionId) {
-
-        Auction auction = auctionRepository.findById(auctionId)
-                .orElseThrow(() -> new RuntimeException("Auction not found"));
-
-        auction.setWatchers(
-                (auction.getWatchers() == null ? 0 : auction.getWatchers()) + 1
-        );
-
-        return map(auctionRepository.save(auction));
-    }*/
 
     @Transactional
     public AuctionDto watchAuction(Long auctionId, UUID userId) {
@@ -369,5 +358,18 @@ public class AuctionService {
         auction.setEndDate(dto.endDate());
 
         auctionRepository.save(auction);
+    }
+
+    public AuctionDto getAuctionById(Long id) {
+        return map(auctionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Auction not found")));
+    }
+
+    public List<AuctionDto> getWonAuctions(UUID userId) {
+        // CLOSED = enchère terminée, winnerId = userId
+        return auctionRepository.findByWinnerIdAndStatus(userId, AuctionStatus.CLOSED)
+                .stream()
+                .map(this::map)
+                .toList();
     }
 }

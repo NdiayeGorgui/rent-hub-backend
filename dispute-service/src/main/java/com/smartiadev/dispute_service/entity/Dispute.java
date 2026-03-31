@@ -20,6 +20,7 @@ public class Dispute {
     private Long id;
 
     private Long rentalId;
+    private Long auctionId;
     private Long itemId;
 
     private UUID openedBy;

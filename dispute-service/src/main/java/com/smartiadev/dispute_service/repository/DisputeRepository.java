@@ -36,5 +36,6 @@ public interface DisputeRepository extends JpaRepository<Dispute, Long> {
 
 
     long countByAdminDecisionIsNotNull();
+    boolean existsByAuctionId(Long auctionId);
 }
 

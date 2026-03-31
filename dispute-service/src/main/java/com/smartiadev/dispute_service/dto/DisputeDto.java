@@ -5,6 +5,7 @@ import java.util.UUID;
 public record DisputeDto(
         Long id,
         Long rentalId,
+        Long auctionId,
         Long itemId,
         UUID openedBy,
         UUID reportedUserId,

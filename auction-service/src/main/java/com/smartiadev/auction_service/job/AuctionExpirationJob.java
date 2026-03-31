@@ -41,6 +41,7 @@ public class AuctionExpirationJob {
 
                                 if (reserveMet) {
                                     auction.setStatus(AuctionStatus.CLOSED); // Gagnant
+                                    auction.setWinnerId(bid.getBidderId());
                                     eventPublisher.publishAuctionClosed(
                                             new AuctionClosedEvent(
                                                     auction.getId(),

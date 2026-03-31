@@ -155,4 +155,19 @@ public class AuctionController {
 
         return ResponseEntity.ok().build();
     }
+
+    // Pour AuctionClient du dispute-service
+    @GetMapping("/{id}")
+    public AuctionDto getById(@PathVariable Long id) {
+        return service.getAuctionById(id);
+    }
+
+    // Pour récupérer les enchères gagnées par un user
+    @GetMapping("/my/won")
+    public List<AuctionDto> getMyWonAuctions(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return service.getWonAuctions(userId);
+    }
 }

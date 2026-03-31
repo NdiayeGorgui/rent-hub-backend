@@ -5,6 +5,7 @@ import java.util.UUID;
 public record DisputeCreatedEvent(
         Long disputeId,
         Long rentalId,
+        Long auctionId,
         Long itemId,
         UUID adminId,
         UUID openedBy,
