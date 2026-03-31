@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -122,9 +123,28 @@ public class PaymentController {
 
     @PostMapping("/admin/refund-auction-fee")
     public void refundAuctionFee(
-            @RequestParam String paymentIntentId
+            @RequestParam String paymentIntentId,
+            @RequestParam UUID winnerId,
+            @RequestParam Long auctionId
     ) throws StripeException {
-        service.refundAuctionFee(paymentIntentId);
+        service.refundAuctionFee(paymentIntentId, winnerId, auctionId);
+    }
+
+    // Dans PaymentController
+    @PostMapping("/penalty/pay")
+    public ResponseEntity<PaymentIntentResponse> payPenalty(
+            @AuthenticationPrincipal Jwt jwt
+    ) throws StripeException {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(service.createPenaltyPayment(userId));
+    }
+
+    // PaymentController
+    @GetMapping("/admin/auction-fee")
+    public PaymentResponse getAuctionFeeByItemId(
+            @RequestParam Long itemId
+    ) {
+        return service.getAuctionFeePayment(itemId);
     }
 
     @GetMapping("/internal/{paymentId}/status")

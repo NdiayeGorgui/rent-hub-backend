@@ -5,9 +5,11 @@ import com.smartiadev.base_domain_service.dto.ItemDeactivatedEvent;
 import com.smartiadev.base_domain_service.dto.UserSuspendedEvent;
 import com.smartiadev.dispute_service.client.AuthClient;
 import com.smartiadev.dispute_service.client.ItemClient;
+import com.smartiadev.dispute_service.client.PaymentClient;
 import com.smartiadev.dispute_service.client.RentalClient;
 import com.smartiadev.dispute_service.dto.CreateDisputeRequest;
 import com.smartiadev.dispute_service.dto.DisputeDto;
+import com.smartiadev.dispute_service.dto.PaymentResponse;
 import com.smartiadev.dispute_service.dto.ResolveDisputeRequest;
 import com.smartiadev.dispute_service.entity.Dispute;
 import com.smartiadev.dispute_service.entity.DisputeStatus;
@@ -30,6 +32,7 @@ public class DisputeService {
     private final ItemClient itemClient;
     private final AuthClient authClient;
     private final DisputeEventProducer eventProducer;
+    private final PaymentClient paymentClient;
 
 
     @Transactional
@@ -113,17 +116,12 @@ public class DisputeService {
         Dispute dispute = repository.findById(id)
                 .orElseThrow();
 
-        // statut
         dispute.setStatus(DisputeStatus.valueOf(request.decision()));
-
-        // commentaire admin
         dispute.setAdminDecision(request.adminDecision());
-
         dispute.setResolvedAt(LocalDateTime.now());
 
         if ("DEACTIVATE_ITEM".equals(request.action())) {
             itemClient.deactivate(dispute.getItemId());
-
             eventProducer.itemDeactivated(
                     new ItemDeactivatedEvent(
                             dispute.getItemId(),
@@ -137,7 +135,6 @@ public class DisputeService {
 
         if ("SUSPEND_USER".equals(request.action())) {
             authClient.suspend(dispute.getReportedUserId());
-
             eventProducer.userSuspended(
                     new UserSuspendedEvent(
                             dispute.getReportedUserId(),
@@ -149,9 +146,26 @@ public class DisputeService {
             );
         }
 
+        if ("REFUND_AUCTION_FEE".equals(request.action())
+                && DisputeStatus.RESOLVED.name().equals(request.decision())) {
+
+            if (dispute.getReportedUserId() == null) {
+                throw new IllegalStateException("Aucun utilisateur signalé sur ce litige");
+            }
+
+            // ✅ paymentIntentId récupéré automatiquement via Feign
+            PaymentResponse payment = paymentClient.getAuctionFeeByItemId(dispute.getItemId());
+
+            // ✅ winnerId = reportedUserId (le gagnant qui refuse de payer)
+            paymentClient.refundAuctionFee(
+                    payment.paymentIntentId(),
+                    dispute.getReportedUserId(),
+                    dispute.getId()
+            );
+        }
+
         repository.save(dispute);
     }
-
 
     private DisputeDto map(Dispute d) {
         return new DisputeDto(

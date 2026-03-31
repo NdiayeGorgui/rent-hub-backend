@@ -5,7 +5,6 @@ import com.smartiadev.base_domain_service.model.PaymentType;
 import com.smartiadev.payments_service.entity.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -53,5 +52,18 @@ public interface PaymentRepository
 
 
     boolean existsByPaymentIntentIdAndType(String paymentIntentId, PaymentType type);
+
+    Optional<Payment> findByUserIdAndTypeAndStatus(
+            UUID userId,
+            PaymentType type,
+            PaymentStatus status
+    );
+
+    // PaymentRepository
+    Optional<Payment> findByItemIdAndTypeAndStatus(
+            Long itemId,
+            PaymentType type,
+            PaymentStatus status
+    );
 }
 

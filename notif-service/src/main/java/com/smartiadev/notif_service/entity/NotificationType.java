@@ -6,6 +6,8 @@ public enum NotificationType {
     PAYMENT,
     MESSAGE,
     BOOKING,
-    SYSTEM
+    SYSTEM,
+    AUCTION_PENALTY,
+    ACCOUNT_REACTIVATED
 
 }

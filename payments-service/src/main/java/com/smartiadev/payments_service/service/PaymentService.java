@@ -1,9 +1,6 @@
 package com.smartiadev.payments_service.service;
 
-import com.smartiadev.base_domain_service.dto.AuctionCancelledEvent;
-import com.smartiadev.base_domain_service.dto.AuctionFeeRefundedEvent;
-import com.smartiadev.base_domain_service.dto.PaymentCompletedEvent;
-import com.smartiadev.base_domain_service.dto.PaymentCreatedEvent;
+import com.smartiadev.base_domain_service.dto.*;
 import com.smartiadev.base_domain_service.model.PaymentStatus;
 import com.smartiadev.base_domain_service.model.PaymentType;
 import com.smartiadev.payments_service.client.UserClient;
@@ -204,7 +201,11 @@ public class PaymentService {
         );
     }
     @Transactional
-    public void refundAuctionFee(String paymentIntentId) throws StripeException {
+    public void refundAuctionFee(
+            String paymentIntentId,
+            UUID winnerId,
+            Long auctionId
+    ) throws StripeException {
 
         Payment payment = repository
                 .findByPaymentIntentId(paymentIntentId)
@@ -213,21 +214,17 @@ public class PaymentService {
         if (payment.getType() != PaymentType.AUCTION_FEE) {
             throw new IllegalStateException("Invalid payment type");
         }
-
         if (payment.getStatus() != PaymentStatus.SUCCESS) {
             throw new IllegalStateException("Payment not successful");
         }
 
         boolean alreadyRefunded = repository.existsByPaymentIntentIdAndType(
-                paymentIntentId,
-                PaymentType.AUCTION_REFUND
-        );
-
+                paymentIntentId, PaymentType.AUCTION_REFUND);
         if (alreadyRefunded) {
-            throw new IllegalStateException("Payment already refunded");
+            throw new IllegalStateException("Already refunded");
         }
 
-        // 💸 Stripe refund
+        // ✅ 1. Stripe rembourse le owner
         RefundCreateParams params = RefundCreateParams.builder()
                 .setPaymentIntent(paymentIntentId)
                 .setAmount((long) (payment.getAmount() * 100))
@@ -239,61 +236,88 @@ public class PaymentService {
             throw new IllegalStateException("Refund failed");
         }
 
-        // 💾 save refund
-        repository.save(
-                Payment.builder()
-                        .userId(payment.getUserId())
-                        .itemId(payment.getItemId())
-                        .amount(payment.getAmount())
-                        .type(PaymentType.AUCTION_REFUND)
-                        .status(PaymentStatus.SUCCESS)
-                        .paymentIntentId(refund.getId())
-                        .createdAt(LocalDateTime.now())
-                        .build()
-        );
+        // ✅ 2. Sauvegarde du remboursement
+        repository.save(Payment.builder()
+                .userId(payment.getUserId())
+                .itemId(payment.getItemId())
+                .auctionId(auctionId)
+                .amount(payment.getAmount())
+                .type(PaymentType.AUCTION_REFUND)
+                .status(PaymentStatus.SUCCESS)
+                .paymentIntentId(refund.getId())
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        // ✅ 3. Sauvegarde pénalité en PENDING pour le winner
+        repository.save(Payment.builder()
+                .userId(winnerId)
+                .itemId(payment.getItemId())
+                .auctionId(auctionId)
+                .amount(50.0)
+                .type(PaymentType.AUCTION_PENALTY)
+                .status(PaymentStatus.PENDING)
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        // ✅ 4. Publie remboursement owner
         paymentEventPublisher.publishAuctionRefunded(
                 new AuctionFeeRefundedEvent(
                         payment.getItemId(),
-                        payment.getUserId(),  // <-- c'est l'owner
+                        payment.getUserId(),
                         payment.getAmount()
+                )
+        );
+
+        // ✅ 5. Publie pénalité → notif-service
+        kafkaTemplate.send("auction.penalty.pending",
+                new AuctionPenaltyEvent(
+                        winnerId,
+                        auctionId,
+                        payment.getItemId(),
+                        50.0,
+                        "Vous avez refusé de payer après avoir gagné une enchère"
+                )
+        );
+
+        // ✅ 6. Suspend le winner → auth-service (topic dédié, pas celui du dispute)
+        kafkaTemplate.send("auction.penalty.suspension",
+                new AuctionPenaltySuspensionEvent(
+                        winnerId,
+                        auctionId,
+                        payment.getItemId(),
+                        50.0
                 )
         );
     }
 
-  /*  @Transactional
-    public void refundSubscription(String paymentIntentId) throws StripeException {
+    // Dans PaymentService
+    @Transactional
+    public PaymentIntentResponse createPenaltyPayment(UUID userId) throws StripeException {
 
-        Payment payment = repository
-                .findByPaymentIntentId(paymentIntentId)
-                .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
+        // Vérifie qu'une pénalité est bien en attente
+        Payment penalty = repository
+                .findByUserIdAndTypeAndStatus(
+                        userId,
+                        PaymentType.AUCTION_PENALTY,
+                        PaymentStatus.PENDING)
+                .orElseThrow(() -> new IllegalStateException("Aucune pénalité en attente"));
 
-        if (payment.getType() != PaymentType.SUBSCRIPTION &&
-                payment.getType() != PaymentType.SUBSCRIPTION_RENEWAL) {
-            throw new IllegalStateException("Invalid payment type");
-        }
-
-        if (payment.getStatus() != PaymentStatus.SUCCESS) {
-            throw new IllegalStateException("Payment not successful");
-        }
-
-        // Stripe refund
-        RefundCreateParams params = RefundCreateParams.builder()
-                .setPaymentIntent(paymentIntentId)
-                .setAmount((long) (payment.getAmount() * 100))
-                .build();
-
-        Refund.create(params);
-
-        repository.save(
-                Payment.builder()
-                        .userId(payment.getUserId())
-                        .amount(payment.getAmount())
-                        .type(PaymentType.SUBSCRIPTION) // ou SUBSCRIPTION_REFUND si tu veux être propre
-                        .status(PaymentStatus.SUCCESS)
-                        .createdAt(LocalDateTime.now())
-                        .build()
+        PaymentIntent intent = createStripePaymentIntent(
+                userId,
+                penalty.getAmount(),
+                PaymentType.AUCTION_PENALTY,
+                penalty.getItemId(),
+                penalty.getAuctionId()
         );
-    }*/
+
+        // Met à jour la pénalité avec l'intentId
+        penalty.setPaymentIntentId(intent.getId());
+        repository.save(penalty);
+
+        return new PaymentIntentResponse(intent.getClientSecret(), intent.getId());
+    }
+
+
     public List<PaymentResponse> getAllPayments() {
 
         return repository.findAll()
@@ -426,8 +450,30 @@ public class PaymentService {
                 );
                 break;
 
+            case AUCTION_PENALTY:
+                // Réactive le compte
+                kafkaTemplate.send("auction.penalty.paid",
+                        new AuctionPenaltyPaidEvent(
+                                payment.getUserId(),
+                                payment.getAuctionId(),
+                                payment.getAmount()
+                        )
+                );
+                break;
+
             default:
                 log.warn("Unhandled payment type: {}", payment.getType());
         }
+    }
+
+    // PaymentService
+    public PaymentResponse getAuctionFeePayment(Long itemId) {
+        Payment payment = repository
+                .findByItemIdAndTypeAndStatus(
+                        itemId,
+                        PaymentType.AUCTION_FEE,
+                        PaymentStatus.SUCCESS)
+                .orElseThrow(() -> new RuntimeException("Auction fee payment not found"));
+        return map(payment);
     }
 }
