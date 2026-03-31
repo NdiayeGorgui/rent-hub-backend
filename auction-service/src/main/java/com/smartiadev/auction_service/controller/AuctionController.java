@@ -170,4 +170,13 @@ public class AuctionController {
         UUID userId = UUID.fromString(jwt.getSubject());
         return service.getWonAuctions(userId);
     }
+
+    // Enchères où je suis le owner (pour ouvrir litige contre le gagnant)
+    @GetMapping("/my/closed-as-owner")
+    public List<AuctionDto> getMyClosedAuctionsAsOwner(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return service.getClosedAuctionsAsOwner(userId);
+    }
 }

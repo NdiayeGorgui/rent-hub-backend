@@ -54,4 +54,8 @@ Long countByStatus(AuctionStatus status);
     Optional<Auction> findByItemId(Long itemId);
 
     List<Auction> findByWinnerIdAndStatus(UUID winnerId, AuctionStatus status);
+
+    List<Auction> findByOwnerIdAndStatusAndWinnerIdIsNotNull(
+            UUID ownerId, AuctionStatus status
+    );
 }

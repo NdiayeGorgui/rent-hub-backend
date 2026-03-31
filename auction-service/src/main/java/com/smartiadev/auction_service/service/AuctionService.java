@@ -372,4 +372,12 @@ public class AuctionService {
                 .map(this::map)
                 .toList();
     }
+
+    public List<AuctionDto> getClosedAuctionsAsOwner(UUID ownerId) {
+        return auctionRepository.findByOwnerIdAndStatusAndWinnerIdIsNotNull(
+                        ownerId, AuctionStatus.CLOSED)
+                .stream()
+                .map(this::map)
+                .toList();
+    }
 }
