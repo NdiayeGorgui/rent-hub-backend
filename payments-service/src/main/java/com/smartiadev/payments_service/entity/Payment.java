@@ -41,5 +41,6 @@ public class Payment {
     private String failureReason;
 
     private LocalDateTime createdAt;
+    private LocalDateTime penaltyDeadline; // deadline pour payer avant suspension
 }
 

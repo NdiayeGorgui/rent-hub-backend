@@ -31,7 +31,7 @@ public class AuctionPenaltyNotifConsumer {
                         "⚠️ Votre compte a été suspendu suite au refus de paiement " +
                                 "après avoir gagné une enchère. " +
                                 "Une pénalité de " + event.amount() + "$ est en attente. " +
-                                "Rendez-vous dans 'Mon compte' pour régulariser votre situation.",
+                                "Rendez-vous dans 'Mon compte' pour régulariser votre situation dans les 48h.",
                         "AUCTION_PENALTY",
                         false,
                         LocalDateTime.now()

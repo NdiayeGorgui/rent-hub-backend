@@ -81,8 +81,11 @@ public class DisputeService {
                 );
             }
 
-            if (repository.existsByAuctionId(request.auctionId())) {
-                throw new IllegalStateException("Dispute already exists for this auction");
+            // ✅ Chaque utilisateur ne peut ouvrir qu'un seul litige par enchère
+            if (repository.existsByAuctionIdAndOpenedBy(request.auctionId(), userId)) {
+                throw new IllegalStateException(
+                        "Vous avez déjà ouvert un litige pour cette enchère"
+                );
             }
 
             // Récupère l'itemId depuis auction-service

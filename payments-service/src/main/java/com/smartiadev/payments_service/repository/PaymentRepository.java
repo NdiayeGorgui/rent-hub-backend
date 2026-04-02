@@ -65,5 +65,11 @@ public interface PaymentRepository
             PaymentType type,
             PaymentStatus status
     );
+
+    List<Payment> findByTypeAndStatusAndPenaltyDeadlineBefore(
+            PaymentType type,
+            PaymentStatus status,
+            LocalDateTime deadline
+    );
 }
 

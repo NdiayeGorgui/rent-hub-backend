@@ -256,6 +256,7 @@ public class PaymentService {
                 .amount(50.0)
                 .type(PaymentType.AUCTION_PENALTY)
                 .status(PaymentStatus.PENDING)
+                .penaltyDeadline(LocalDateTime.now().plusHours(48)) // ← 48h pour payer
                 .createdAt(LocalDateTime.now())
                 .build());
 
@@ -279,15 +280,14 @@ public class PaymentService {
                 )
         );
 
-        // ✅ 6. Suspend le winner → auth-service (topic dédié, pas celui du dispute)
-        kafkaTemplate.send("auction.penalty.suspension",
-                new AuctionPenaltySuspensionEvent(
-                        winnerId,
-                        auctionId,
-                        payment.getItemId(),
-                        50.0
+       // ✅ 6. Notifie seulement — PAS de suspension immédiate
+        kafkaTemplate.send("auction.penalty.pending",
+                new AuctionPenaltyEvent(
+                        winnerId, auctionId, payment.getItemId(), 50.0,
+                        "Vous avez 48h pour payer la pénalité de 50$ avant suspension de votre compte"
                 )
         );
+
     }
 
     // Dans PaymentService
