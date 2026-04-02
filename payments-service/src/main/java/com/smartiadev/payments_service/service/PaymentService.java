@@ -312,7 +312,7 @@ public class PaymentService {
 
         // Met à jour la pénalité avec l'intentId
         penalty.setPaymentIntentId(intent.getId());
-        repository.save(penalty);
+        repository.saveAndFlush(penalty);
 
         return new PaymentIntentResponse(intent.getClientSecret(), intent.getId());
     }
