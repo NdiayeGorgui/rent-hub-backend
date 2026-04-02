@@ -290,11 +290,10 @@ public class PaymentService {
 
     }
 
-    // Dans PaymentService
     @Transactional
     public PaymentIntentResponse createPenaltyPayment(UUID userId) throws StripeException {
 
-        // Vérifie qu'une pénalité est bien en attente
+        // 🔍 1. Vérifier qu'une pénalité (dette) existe
         Payment penalty = repository
                 .findByUserIdAndTypeAndStatus(
                         userId,
@@ -302,19 +301,34 @@ public class PaymentService {
                         PaymentStatus.PENDING)
                 .orElseThrow(() -> new IllegalStateException("Aucune pénalité en attente"));
 
+        // 💳 2. Créer PaymentIntent Stripe
         PaymentIntent intent = createStripePaymentIntent(
                 userId,
                 penalty.getAmount(),
-                PaymentType.AUCTION_PENALTY,
+                PaymentType.PENALTY_PAYMENT, // 🔥 IMPORTANT
                 penalty.getItemId(),
                 penalty.getAuctionId()
         );
 
-        // Met à jour la pénalité avec l'intentId
-        penalty.setPaymentIntentId(intent.getId());
-        repository.saveAndFlush(penalty);
+        // 💾 3. 🔥 CRÉER un NOUVEAU Payment (NE PAS toucher à penalty)
+        repository.save(
+                Payment.builder()
+                        .userId(userId)
+                        .itemId(penalty.getItemId())
+                        .auctionId(penalty.getAuctionId())
+                        .amount(penalty.getAmount())
+                        .type(PaymentType.PENALTY_PAYMENT) // 🔥 IMPORTANT
+                        .status(PaymentStatus.PENDING)
+                        .paymentIntentId(intent.getId())
+                        .createdAt(LocalDateTime.now())
+                        .build()
+        );
 
-        return new PaymentIntentResponse(intent.getClientSecret(), intent.getId());
+        // 🔁 4. Retour au frontend
+        return new PaymentIntentResponse(
+                intent.getClientSecret(),
+                intent.getId()
+        );
     }
 
 
@@ -459,6 +473,30 @@ public class PaymentService {
                                 payment.getAmount()
                         )
                 );
+                break;
+            case PENALTY_PAYMENT:
+
+                // 🔍 trouver la pénalité (dette)
+                Payment penalty = repository
+                        .findByUserIdAndTypeAndStatus(
+                                payment.getUserId(),
+                                PaymentType.AUCTION_PENALTY,
+                                PaymentStatus.PENDING)
+                        .orElseThrow(() -> new IllegalStateException("Penalty not found"));
+
+                // ✅ marquer la dette comme payée
+                penalty.setStatus(PaymentStatus.SUCCESS);
+                repository.save(penalty);
+
+                // 🔓 réactiver le compte
+                kafkaTemplate.send("auction.penalty.paid",
+                        new AuctionPenaltyPaidEvent(
+                                payment.getUserId(),
+                                payment.getAuctionId(),
+                                payment.getAmount()
+                        )
+                );
+
                 break;
 
             default:

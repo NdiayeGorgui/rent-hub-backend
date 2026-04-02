@@ -8,6 +8,7 @@ import com.smartiadev.payments_service.entity.Payment;
 import com.smartiadev.payments_service.repository.PaymentRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class PenaltyDeadlineJob {
 
     private final PaymentRepository repository;
@@ -33,12 +35,27 @@ public class PenaltyDeadlineJob {
                         LocalDateTime.now()
                 );
 
-        for (Payment p : overdue) {
-            // Marque comme expiré
-            p.setStatus(PaymentStatus.EXPIRED);
-            repository.save(p);
+        if (overdue.isEmpty()) {
+            log.info("✅ Aucun penalty expiré trouvé");
+            return;
+        }
 
-            // Suspend maintenant
+        log.info("⚠️ {} penalty(s) expiré(s) détecté(s)", overdue.size());
+
+        for (Payment p : overdue) {
+
+            // 🔒 Sécurité anti double traitement
+            if (p.getStatus() != PaymentStatus.PENDING) {
+                continue;
+            }
+
+            log.info("⛔ Expiration penalty → userId={}, auctionId={}",
+                    p.getUserId(), p.getAuctionId());
+
+            // ✅ Marquer comme expiré
+            p.setStatus(PaymentStatus.EXPIRED);
+
+            // 🔥 Suspendre le compte
             kafkaTemplate.send("auction.penalty.suspension",
                     new AuctionPenaltySuspensionEvent(
                             p.getUserId(),
@@ -48,13 +65,21 @@ public class PenaltyDeadlineJob {
                     )
             );
 
-            // Notifie
+            // 🔔 Notification utilisateur
             kafkaTemplate.send("auction.penalty.expired",
                     new AuctionPenaltyEvent(
-                            p.getUserId(), p.getAuctionId(), p.getItemId(), p.getAmount(),
+                            p.getUserId(),
+                            p.getAuctionId(),
+                            p.getItemId(),
+                            p.getAmount(),
                             "Délai dépassé — votre compte a été suspendu"
                     )
             );
         }
+
+        // 💾 Sauvegarde en batch (meilleure perf)
+        repository.saveAll(overdue);
+
+        log.info("✅ Traitement des penalties expirés terminé");
     }
 }

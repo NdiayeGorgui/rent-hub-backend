@@ -28,10 +28,10 @@ public class AuctionPenaltyNotifConsumer {
                 new Notification(
                         null,
                         event.winnerId(),
-                        "⚠️ Votre compte a été suspendu suite au refus de paiement " +
+                        "⚠️ Votre compte pourrait etre suspendu suite au refus de paiement " +
                                 "après avoir gagné une enchère. " +
                                 "Une pénalité de " + event.amount() + "$ est en attente. " +
-                                "Rendez-vous dans 'Mon compte' pour régulariser votre situation dans les 48h.",
+                                "Rendez-vous dans 'Mon profil' pour régulariser votre situation dans les 48h.",
                         "AUCTION_PENALTY",
                         false,
                         LocalDateTime.now()
@@ -55,8 +55,32 @@ public class AuctionPenaltyNotifConsumer {
                         null,
                         event.winnerId(),
                         "✅ Votre pénalité de " + event.amount() + "$ a été réglée. " +
-                                "Votre compte est réactivé, vous pouvez à nouveau participer aux enchères.",
+                                "Votre compte reste actif, vous pouvez à nouveau participer aux enchères.",
                         "ACCOUNT_REACTIVATED",
+                        false,
+                        LocalDateTime.now()
+                )
+        );
+
+        messagingTemplate.convertAndSend(
+                "/topic/notifications/" + event.winnerId(),
+                notification
+        );
+    }
+
+    @KafkaListener(
+            topics = "auction.penalty.expired",
+            groupId = "notification-group"
+    )
+    public void onAuctionPenaltyExpired(AuctionPenaltyEvent event) {
+
+        Notification notification = repository.save(
+                new Notification(
+                        null,
+                        event.winnerId(),
+                        "⛔ Vous n'avez pas payé votre pénalité de " + event.amount() + "$ dans le délai imparti. " +
+                                "Votre compte a été suspendu.",
+                        "ACCOUNT_SUSPENDED",
                         false,
                         LocalDateTime.now()
                 )
