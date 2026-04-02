@@ -6,6 +6,5 @@ public enum PaymentType {
     AUCTION_FEE,
     AUCTION_REFUND,
     AUCTION_PENALTY,
-    PENALTY_PAYMENT,    // 🔥 paiement réel
     AUCTION_CANCELLATION_FEE
 }

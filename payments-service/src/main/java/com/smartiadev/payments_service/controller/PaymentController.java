@@ -73,20 +73,7 @@ public class PaymentController {
         UUID userId = UUID.fromString(jwt.getSubject());
         return service.createPremiumPayment(userId, request);
     }
-//SUPPRIME complètement : todo
-    @PostMapping("/confirm/{intentId}")
-    public PaymentResponse confirm(@PathVariable String intentId) throws Exception {
 
-        PaymentIntent intent = PaymentIntent.retrieve(intentId);
-
-        intent.confirm(
-                Map.of(
-                        "payment_method", "pm_card_visa"
-                )
-        );
-
-        return service.confirmPayment(intentId);
-    }
 
     @GetMapping
     @Operation(summary = "Get all payments (admin)")
