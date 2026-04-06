@@ -1,0 +1,15 @@
+global:
+  registry: gorgui
+  pullPolicy: Always
+  jwtSecret: "HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU="
+  kafkaBootstrap: "kafka:9092"
+  eurekaUrl: "http://eureka-registry:8761/eureka/"
+  configImport: "optional:configserver:http://configuration-service:8888"
+  dbUrl: "jdbc:postgresql://postgres:5432/renthub_db"
+  dbUser: "postgres"
+  dbPassword: "password"
+
+stripe:
+  secretKey: "REPLACE_ME"
+  publicKey: "REPLACE_ME"
+  webhookSecret: "REPLACE_ME"

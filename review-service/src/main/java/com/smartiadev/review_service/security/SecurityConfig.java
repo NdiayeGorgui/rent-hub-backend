@@ -21,7 +21,7 @@ public class SecurityConfig {
                // .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers(
                                 "/api/reviews/user/*/**",
                                 "/api/reviews/user/*/average",

@@ -53,3 +53,14 @@ logging:
   level:
     org.springframework.kafka: INFO
     com.smartiadev.notif_service: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always

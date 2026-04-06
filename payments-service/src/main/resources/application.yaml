@@ -65,3 +65,14 @@ stripe:
   secret-key: ${STRIPE_SECRET_KEY}
   public-key: ${STRIPE_PUBLIC_KEY}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always

@@ -35,6 +35,7 @@ public class SecurityConfig {
                                 "/api/subscriptions/internal/*/is-premium",
                                 "/api/subscriptions/internal/*/status"
                         ).permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
 
                         // 🔐 ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

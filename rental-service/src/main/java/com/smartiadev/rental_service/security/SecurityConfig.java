@@ -19,6 +19,7 @@ public class SecurityConfig {
                // .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").permitAll()
                         // 🔓 endpoint interne pour microservices
                         .requestMatchers("/api/rentals/internal/**",
                                 "/v3/api-docs/**"

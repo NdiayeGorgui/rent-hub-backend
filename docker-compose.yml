@@ -104,7 +104,7 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: [ "CMD-SHELL", "timeout 3 bash -c 'cat < /dev/null > /dev/tcp/localhost/8888' || exit 1" ]
+      test: [ "CMD", "curl", "-f", "http://configuration-service:8888/actuator/health" ]
       interval: 15s
       timeout: 10s
       retries: 10

@@ -38,3 +38,14 @@ eureka:
 jwt:
   secret: HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
   expiration: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always

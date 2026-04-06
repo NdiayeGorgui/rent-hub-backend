@@ -40,6 +40,7 @@ public class SecurityConfig {
 
                         // ✅ IMPORTANT : autoriser OPTIONS (preflight)
                         .pathMatchers(org.springframework.http.HttpMethod.OPTIONS).permitAll()
+                        .pathMatchers("/actuator/**").permitAll()
 
                         // =========================
                         // 🔓 SWAGGER PUBLIC

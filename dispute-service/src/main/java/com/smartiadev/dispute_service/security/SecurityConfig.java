@@ -21,6 +21,7 @@ public class SecurityConfig {
                // .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/**").permitAll()
                         // 🔓 Swagger public
                         .requestMatchers(
                                 "/v3/api-docs/**",

@@ -36,3 +36,14 @@ eureka:
   client:
     service-url:
       defaultZone: http://eureka-registry:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
