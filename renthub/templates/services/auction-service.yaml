@@ -41,11 +41,17 @@ spec:
             - name: SPRING_CONFIG_IMPORT
               value: "optional:configserver:http://configuration-service:8888"
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://postgres:5432/renthub_db"
+              value: "jdbc:postgresql://postgres:5432/renthub_db?currentSchema=auction_schema"
             - name: SPRING_DATASOURCE_USERNAME
               value: "postgres"
             - name: SPRING_DATASOURCE_PASSWORD
               value: "password"
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "true"
+            - name: EUREKA_INSTANCE_IP_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           resources:
             requests:
               memory: "512Mi"

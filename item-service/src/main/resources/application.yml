@@ -6,17 +6,19 @@ spring:
     name: item-service
   config:
     import: optional:configserver:http://configuration-service:8888
-
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB      # ← ajoute
+      max-request-size: 50MB  # ← ajoute
   datasource:
     url: jdbc:postgresql://postgres:5432/renthub_db
     username: postgres
     password: password
-
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
-
   kafka:
     consumer:
       group-id: item-service-v2
@@ -26,7 +28,6 @@ spring:
       properties:
         spring.json.trusted.packages: com.smartiadev.base_domain_service.dto
         spring.json.use.type.headers: true
-        #spring.json.value.default.type: com.smartiadev.base_domain_service.dto.RentalApprovedEvent
 
 jwt:
   secret: HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=

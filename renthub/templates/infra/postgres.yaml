@@ -50,6 +50,8 @@ spec:
               value: postgres
             - name: POSTGRES_PASSWORD
               value: password
+            - name: POSTGRES_MAX_CONNECTIONS
+              value: "200"
           ports:
             - containerPort: 5432
           resources:

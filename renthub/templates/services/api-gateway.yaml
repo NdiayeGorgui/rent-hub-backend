@@ -32,6 +32,12 @@ spec:
               value: "http://eureka-registry:8761/eureka/"
             - name: SPRING_CONFIG_IMPORT
               value: "optional:configserver:http://configuration-service:8888"
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "true"
+            - name: EUREKA_INSTANCE_IP_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           resources:
             requests:
               memory: "512Mi"

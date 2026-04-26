@@ -1,9 +1,10 @@
-
 spring:
   application:
     name: api-gateway
   config:
     import: "optional:configserver:http://configuration-service:8888"
+  codec:
+    max-in-memory-size: 50MB  # ← ajoute
   cloud:
     gateway:
       routes:
@@ -182,9 +183,6 @@ spring:
 server:
   port: 8080
 
-# =========================
-# SWAGGER AGRÉGÉ
-# =========================
 springdoc:
   swagger-ui:
     urls:
@@ -233,4 +231,3 @@ management:
       probes:
         enabled: true
       show-details: always
-

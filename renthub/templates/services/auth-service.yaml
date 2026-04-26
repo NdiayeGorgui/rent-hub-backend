@@ -38,6 +38,12 @@ spec:
               value: "HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU="
             - name: eureka.client.service-url.defaultZone
               value: "http://eureka-registry:8761/eureka/"
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "true"
+            - name: EUREKA_INSTANCE_IP_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
             - name: SPRING_CONFIG_IMPORT
               value: "optional:configserver:http://configuration-service:8888"
             - name: SPRING_DATASOURCE_USERNAME

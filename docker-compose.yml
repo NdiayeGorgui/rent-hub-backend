@@ -122,6 +122,7 @@ services:
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
+      - SPRING_CODEC_MAX_IN_MEMORY_SIZE=52428800
     depends_on:
       eureka-registry:
         condition: service_healthy

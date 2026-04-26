@@ -12,9 +12,13 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.addAllowedOrigin("http://auth-service:8181");
+        config.addAllowedOrigin("http://localhost:8181");
+        config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("http://192.168.0.118:8181");
         config.addAllowedOrigin("http://10.0.2.2:8181");
+        config.addAllowedOrigin("http://192.168.0.118:8080"); // ← ajoute
+        config.addAllowedOrigin("http://10.0.2.2:8080");      // ← ajoute
+        config.addAllowedOrigin("http://localhost:8080");      // ← ajoute
        
 
         config.addAllowedMethod("*");
