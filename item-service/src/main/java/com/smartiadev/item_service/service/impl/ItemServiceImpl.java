@@ -219,33 +219,67 @@ public class ItemServiceImpl implements ItemService {
                         new EntityNotFoundException("Item not found")
                 );
 
+        // 🔐 Vérification propriétaire
         if (!item.getOwnerId().equals(ownerId)) {
             throw new RuntimeException("Forbidden: not item owner");
         }
 
-        // 🔴 bloqué par admin
+        // 🔴 Bloqué par admin
         if (item.getStatus() == ItemStatus.BLOCKED) {
             throw new RuntimeException("Item blocked by admin");
         }
 
-        // 🔴 paiement non fait
+        // 🔴 Paiement non effectué (auction)
         if (item.getStatus() == ItemStatus.PENDING_AUCTION_FEE) {
             throw new RuntimeException(
                     "Auction fee must be paid before activating this item"
             );
         }
 
-        // 🔴 🔥 IMPORTANT : uniquement depuis DRAFT
-        if (item.getStatus() != ItemStatus.DRAFT) {
+        // 🔥 LOGIQUE MÉTIER PAR TYPE
+        switch (item.getType()) {
+
+            case RENTAL:
+                handleRentalActivation(item);
+                break;
+
+            case AUCTION:
+                handleAuctionActivation(item);
+                break;
+
+            default:
+                throw new RuntimeException("Unsupported item type: " + item.getType());
+        }
+
+        repository.save(item);
+    }
+
+    private void handleRentalActivation(Item item) {
+
+        // ✅ autorisé seulement si désactivé par user
+        if (item.getStatus() != ItemStatus.INACTIVE) {
             throw new RuntimeException(
-                    "Item must be in DRAFT status to be activated"
+                    "Rental item must be INACTIVE to be activated. Current status: "
+                            + item.getStatus()
             );
         }
 
         item.setStatus(ItemStatus.ACTIVE);
         item.setActive(true);
+    }
 
-        repository.save(item);
+    private void handleAuctionActivation(Item item) {
+
+        // ✅ uniquement après création (draft)
+        if (item.getStatus() != ItemStatus.DRAFT) {
+            throw new RuntimeException(
+                    "Auction must be in DRAFT status to be activated. Current status: "
+                            + item.getStatus()
+            );
+        }
+
+        item.setStatus(ItemStatus.ACTIVE);
+        item.setActive(true);
     }
 
     @Override
