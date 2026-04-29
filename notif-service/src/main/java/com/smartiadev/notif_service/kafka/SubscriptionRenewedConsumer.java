@@ -19,7 +19,7 @@ public class SubscriptionRenewedConsumer {
     private final SimpMessagingTemplate messagingTemplate; // WebSocket
 
     @KafkaListener(
-            topics = "subscription.renewal.requested",
+            topics = "subscription.renewed",
             groupId = "notification-group"
     )
     public void onSubscriptionRenewed(SubscriptionRenewedEvent event) {
