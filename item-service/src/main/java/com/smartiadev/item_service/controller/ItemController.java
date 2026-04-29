@@ -229,7 +229,7 @@ public class ItemController {
 
             // 📄 PAGINATION
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "12") int size
     ) {
 
        /* Sort sort = Sort.by(
