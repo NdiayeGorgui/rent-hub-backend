@@ -16,7 +16,7 @@ public class SubscriptionExpirationJob {
     private final SubscriptionRepository repository;
     private final SubscriptionEventPublisher publisher;
 
-    @Scheduled(cron = "0 05 04 * * *")
+    @Scheduled(cron = "0 05 11 * * *")
     //@Scheduled(cron = "0 55 19 * * *")
     public void expireGracePeriodSubscriptions() {
 
