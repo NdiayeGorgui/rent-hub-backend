@@ -157,6 +157,11 @@ spring:
           predicates:
             - Path=/api/messages/**, /api/faqs/**
 
+        - id: messaging-uploads
+          uri: http://messaging-service:8090
+          predicates:
+            - Path=/uploads/messages/**
+
         - id: messaging-service-docs
           uri: http://messaging-service:8090
           predicates:

@@ -28,6 +28,9 @@ public class Message {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "image_url") // ← ajoute
+    private String imageUrl;
+
     private LocalDateTime timestamp;
 
     private boolean read;

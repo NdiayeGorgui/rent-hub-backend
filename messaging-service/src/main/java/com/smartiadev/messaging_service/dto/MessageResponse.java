@@ -10,6 +10,7 @@ public record MessageResponse(
         UUID receiverId,
         Long itemId,
         String content,
+        String imageUrl,
         LocalDateTime timestamp,
         boolean read
 ) {

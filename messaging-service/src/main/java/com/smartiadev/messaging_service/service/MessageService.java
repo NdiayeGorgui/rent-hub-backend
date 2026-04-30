@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,8 +23,12 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
     private final UserClient userClient;
+    private final ImageStorageService imageStorageService;
 
     public MessageResponse sendMessage(UUID senderId, MessageRequest request) {
+
+
+
 
         UUID receiverId = request.receiverId();
 
@@ -70,6 +75,7 @@ public class MessageService {
                 message.getReceiverId(),
                 message.getItemId(),
                 message.getContent(),
+               null,
                 message.getTimestamp(),
                 message.isRead()
         );
@@ -87,6 +93,7 @@ public class MessageService {
                         m.getReceiverId(),
                         m.getItemId(),
                         m.getContent(),
+                        m.getImageUrl(),
                         m.getTimestamp(),
                         m.isRead()
                 ))
@@ -245,6 +252,7 @@ public class MessageService {
                 message.getReceiverId(),
                 null,
                 message.getContent(),
+                message.getImageUrl(),
                 message.getTimestamp(),
                 message.isRead()
         );
@@ -334,6 +342,7 @@ public class MessageService {
                 message.getReceiverId(),
                 message.getItemId(),
                 message.getContent(),
+                null,
                 message.getTimestamp(),
                 message.isRead()
         );
@@ -358,5 +367,67 @@ public class MessageService {
             throw new IllegalStateException("No admin available");
         }
         return admins.get(0).id(); // prendre le premier admin
+    }
+
+    public MessageResponse sendWithImage(
+            UUID senderId,
+            Long conversationId,
+            String content,        // ← texte optionnel
+            MultipartFile image    // ← image optionnelle
+    ) {
+        // 1. Récupérer la conversation
+        Conversation conversation = conversationRepository
+                .findById(conversationId)
+                .orElseThrow(() -> new RuntimeException("Conversation not found"));
+
+        // 2. Déterminer le receiver
+        UUID receiverId = conversation.getUser1Id().equals(senderId)
+                ? conversation.getUser2Id()
+                : conversation.getUser1Id();
+
+        // 3. Upload image si présente
+        String imageUrl = null;
+        if (image != null && !image.isEmpty()) {
+            imageUrl = imageStorageService.uploadImage(image);
+        }
+
+        // 4. Valider qu'on a au moins texte ou image
+        if ((content == null || content.isBlank()) && imageUrl == null) {
+            throw new RuntimeException("Message must have content or image");
+        }
+
+        // 5. Créer le message
+        Message message = new Message();
+        message.setConversation(conversation);
+        message.setSenderId(senderId);
+        message.setReceiverId(receiverId);
+        message.setItemId(conversation.getItemId());
+        message.setContent(content);
+        message.setImageUrl(imageUrl);
+        message.setTimestamp(LocalDateTime.now());
+        message.setRead(false);
+        message.setSupportMessage(false);
+        messageRepository.save(message);
+
+        // 6. Update conversation — lastMessage adapté
+        String lastMessage = imageUrl != null && (content == null || content.isBlank())
+                ? "📷 Image"
+                : content;
+        conversation.setLastMessage(lastMessage);
+        conversation.setLastMessageAt(LocalDateTime.now());
+        conversation.setLastSenderId(senderId);
+        conversationRepository.save(conversation);
+
+        return new MessageResponse(
+                message.getId(),
+                conversation.getId(),
+                message.getSenderId(),
+                message.getReceiverId(),
+                message.getItemId(),
+                message.getContent(),
+                message.getImageUrl(),
+                message.getTimestamp(),
+                message.isRead()
+        );
     }
 }

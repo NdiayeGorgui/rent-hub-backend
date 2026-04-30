@@ -6,6 +6,11 @@ spring:
     name: messaging-service
   config:
     import: optional:configserver:http://configuration-service:8888
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB      # ← ajoute
+      max-request-size: 50MB  # ← ajoute
 
   datasource:
     url: jdbc:postgresql://postgres:5432/renthub_db
