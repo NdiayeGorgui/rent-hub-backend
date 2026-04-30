@@ -38,7 +38,7 @@ public class Review {
     private UUID reviewerId;
 
     // 🔗 Personne notée
-    @Column(nullable = false)
+    @Column(nullable = true)
     private UUID reviewedUserId;
 
     // ⭐ Note

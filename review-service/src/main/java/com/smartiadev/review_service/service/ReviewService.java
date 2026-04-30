@@ -52,7 +52,7 @@ public class ReviewService {
             throw new IllegalStateException("Forbidden");
         }
 
-        // 4️⃣ Un seul avis par location(1 pour owner envers le renter, 1 pour renter envers le item)
+        // 4️⃣ Un seul avis par utilisateur et par location
         if (reviewRepository.existsByRentalIdAndReviewerId(
                 request.rentalId(),
                 reviewerId)) {
@@ -60,25 +60,32 @@ public class ReviewService {
                     "User already reviewed this rental"
             );
         }
-       /* if (reviewRepository.existsByRentalId(request.rentalId())) {
-            throw new IllegalStateException(
-                    "Review already exists for this rental"
-            );
-        }*/
 
-        // 5️⃣ Déterminer l’utilisateur noté
+        // 5️⃣ Déterminer le type d’avis
         ReviewType type;
-        UUID reviewedUserId = null;
+        UUID reviewedUserId;
 
         if (reviewerId.equals(rental.ownerId())) {
             type = ReviewType.USER;
             reviewedUserId = rental.renterId();
         } else {
             type = ReviewType.ITEM;
-            reviewedUserId = rental.ownerId();
+            reviewedUserId = null;
         }
 
-        // 6️⃣ Créer l’avis
+     // ✅ Validation métier
+        if (type == ReviewType.USER && reviewedUserId == null) {
+            throw new IllegalStateException("USER review must have reviewedUserId");
+        }
+
+        if (type == ReviewType.ITEM && reviewedUserId != null) {
+            throw new IllegalStateException("ITEM review must not have reviewedUserId");
+        }
+        if (request.rating() < 1 || request.rating() > 5) {
+            throw new IllegalStateException("Rating must be between 1 and 5");
+        }
+
+        // 7️⃣ Créer l’avis
         Review review = Review.builder()
                 .rentalId(request.rentalId())
                 .itemId(rental.itemId())
@@ -92,7 +99,7 @@ public class ReviewService {
 
         Review saved = reviewRepository.save(review);
 
-        // 7️⃣ Publier l’événement
+        // 8️⃣ Publier l’événement
         eventProducer.sendReviewCreated(
                 new ReviewCreatedEvent(
                         saved.getId(),
@@ -100,13 +107,13 @@ public class ReviewService {
                         saved.getItemId(),
                         saved.getReviewerId(),
                         saved.getReviewedUserId(),
+                        rental.ownerId(),
                         saved.getRating()
                 )
         );
 
         return saved;
     }
-
     /* =========================
        READ (DTO ONLY)
        ========================= */
@@ -122,12 +129,19 @@ public class ReviewService {
                 .toList();
     }
 
-    public List<ReviewDto> getReviewsByUser(UUID userId) {
+   /* public List<ReviewDto> getReviewsByUser(UUID userId) {
         return reviewRepository.findByReviewedUserId(userId)
                 .stream()
                 .map(this::mapToDto)
                 .toList();
-    }
+    }*/
+   public List<ReviewDto> getReviewsByUser(UUID userId) {
+       return reviewRepository
+               .findByReviewedUserIdAndType(userId, ReviewType.USER) // ← ajoute le filtre type
+               .stream()
+               .map(this::mapToDto)
+               .toList();
+   }
 
    /* public Double getAverageRatingForItem(Long itemId) {
         return reviewRepository.getAverageRatingByItem(itemId);

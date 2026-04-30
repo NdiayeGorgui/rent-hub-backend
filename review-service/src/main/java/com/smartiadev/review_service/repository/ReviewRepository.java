@@ -1,6 +1,8 @@
 package com.smartiadev.review_service.repository;
 
 import com.smartiadev.review_service.entity.Review;
+import com.smartiadev.review_service.entity.ReviewType;
+import org.hibernate.sql.results.graph.FetchList;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -111,6 +113,8 @@ public interface ReviewRepository
          @Param("itemId") Long itemId,
          @Param("ownerId") UUID ownerId
  );
+
+ List<Review> findByReviewedUserIdAndType(UUID reviewedUserId, ReviewType type);
 }
 
 

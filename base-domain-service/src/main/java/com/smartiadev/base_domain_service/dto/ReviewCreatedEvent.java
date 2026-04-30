@@ -8,6 +8,7 @@ public record ReviewCreatedEvent(
         Long itemId,
         UUID reviewerId,
         UUID reviewedUserId,
+        UUID itemOwnerId,
         Integer rating
 ) {}
 
