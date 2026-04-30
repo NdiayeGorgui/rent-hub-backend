@@ -20,15 +20,15 @@ public class ReviewNotificationConsumer {
     @KafkaListener(topics = "review.created")
     public void onReviewCreated(ReviewCreatedEvent event) {
 
-        // ── 1️⃣ NOTIF AU PROPRIÉTAIRE DE L’ITEM (TOUJOURS) ──
-        if (event.itemOwnerId() != null) {
+        // ── 1️⃣ Notif pour le propriétaire de l’item ──
+        if (!event.itemOwnerId().equals(event.reviewerId())) {
 
-            Notification itemNotif = repository.save(
+            Notification notifItem = repository.save(
                     new Notification(
                             null,
                             event.itemOwnerId(),
-                            "⭐ Votre article a reçu un avis (" + event.rating() + "★)",
-                            "REVIEW",
+                            "📦 Votre article a reçu un avis (" + event.rating() + "★)",
+                            "REVIEW_ITEM",
                             false,
                             LocalDateTime.now()
                     )
@@ -36,21 +36,20 @@ public class ReviewNotificationConsumer {
 
             messagingTemplate.convertAndSend(
                     "/topic/notifications/" + event.itemOwnerId(),
-                    itemNotif
+                    notifItem
             );
-
-            System.out.println("📦 Notif envoyée au owner : " + event.itemOwnerId());
         }
 
-        // ── 2️⃣ NOTIF À L’UTILISATEUR NOTÉ (SEULEMENT USER REVIEW) ──
-        if (event.reviewedUserId() != null) {
+        // ── 2️⃣ Notif pour user (si USER review) ──
+        if (event.reviewedUserId() != null
+                && !event.reviewedUserId().equals(event.reviewerId())) {
 
-            Notification userNotif = repository.save(
+            Notification notifUser = repository.save(
                     new Notification(
                             null,
                             event.reviewedUserId(),
-                            "⭐ Vous avez reçu un nouvel avis (" + event.rating() + "★)",
-                            "REVIEW",
+                            "⭐ Vous avez reçu un avis (" + event.rating() + "★)",
+                            "REVIEW_USER",
                             false,
                             LocalDateTime.now()
                     )
@@ -58,10 +57,10 @@ public class ReviewNotificationConsumer {
 
             messagingTemplate.convertAndSend(
                     "/topic/notifications/" + event.reviewedUserId(),
-                    userNotif
+                    notifUser
             );
-
-            System.out.println("👤 Notif envoyée à l'utilisateur : " + event.reviewedUserId());
         }
+
+        System.out.println("✅ Notifications review traitées proprement");
     }
 }
