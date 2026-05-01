@@ -160,7 +160,7 @@ spring:
         - id: messaging-uploads
           uri: http://messaging-service:8090
           predicates:
-            - Path=/uploads/messages/**
+            - Path=/uploads/**
 
         - id: messaging-service-docs
           uri: http://messaging-service:8090

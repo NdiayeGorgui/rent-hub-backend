@@ -28,7 +28,7 @@ public class LocalImageStorageService implements ImageStorageService {
         try {
             Files.createDirectories(path.getParent());
             Files.write(path, file.getBytes());
-            return "/uploads/messages/" + filename;
+            return "/uploads/" + filename;
         } catch (IOException e) {
             throw new RuntimeException("Upload failed: " + e.getMessage());
         }
