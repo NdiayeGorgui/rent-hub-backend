@@ -58,4 +58,7 @@ Long countByStatus(AuctionStatus status);
     List<Auction> findByOwnerIdAndStatusAndWinnerIdIsNotNull(
             UUID ownerId, AuctionStatus status
     );
+
+    List<Auction> findByOwnerId(UUID ownerId);
+
 }

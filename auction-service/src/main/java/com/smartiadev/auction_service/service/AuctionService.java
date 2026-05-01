@@ -380,4 +380,22 @@ public class AuctionService {
                 .map(this::map)
                 .toList();
     }
+
+    // Enchères que j'ai lancées (owner)
+    public List<AuctionDto> getMyAuctions(UUID ownerId) {
+        return auctionRepository.findByOwnerId(ownerId)
+                .stream()
+                .map(this::map)
+                .toList();
+    }
+
+    // Enchères où j'ai participé (bidder)
+    public List<AuctionDto> getAuctionsIParticipateIn(UUID userId) {
+        return bidRepository.findDistinctAuctionIdsByBidderId(userId)
+                .stream()
+                .map(auctionId -> auctionRepository.findById(auctionId).orElse(null))
+                .filter(a -> a != null)
+                .map(this::map)
+                .toList();
+    }
 }

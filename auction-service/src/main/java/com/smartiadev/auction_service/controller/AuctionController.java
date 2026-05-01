@@ -179,4 +179,14 @@ public class AuctionController {
         UUID userId = UUID.fromString(jwt.getSubject());
         return service.getClosedAuctionsAsOwner(userId);
     }
+
+    @GetMapping("/my/launched")
+    public List<AuctionDto> getMyLaunchedAuctions(@AuthenticationPrincipal Jwt jwt) {
+        return service.getMyAuctions(UUID.fromString(jwt.getSubject()));
+    }
+
+    @GetMapping("/my/participating")
+    public List<AuctionDto> getAuctionsIParticipateIn(@AuthenticationPrincipal Jwt jwt) {
+        return service.getAuctionsIParticipateIn(UUID.fromString(jwt.getSubject()));
+    }
 }
