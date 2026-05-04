@@ -74,7 +74,8 @@ public class SecurityConfig {
                         .pathMatchers(
                                 "/api/auth/**",
                                 "/api/users/internal/*/auction-strike",
-                                "/api/profile/**"
+                                "/api/profile/**",
+                                "/api/stats/**"
                         ).permitAll()
                         .pathMatchers(
                                 "/ws-notifications/**",

@@ -15,7 +15,7 @@ spring:
         - id: auth-service
           uri: http://auth-service:8081
           predicates:
-            - Path=/api/auth/**,/api/profile/**,/api/admin/users/**,/api/admin/stats/**,/api/users/**
+            - Path=/api/auth/**,/api/profile/**,/api/admin/users/**,/api/admin/stats/**,/api/users/**,/api/stats/**
 
         - id: auth-service-docs
           uri: http://auth-service:8081

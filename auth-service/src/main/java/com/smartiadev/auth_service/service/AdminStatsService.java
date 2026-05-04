@@ -68,4 +68,13 @@ public class AdminStatsService {
                 paymentStats
         );
     }
+
+    public PublicStatsDto getPublicStats() {
+        long totalUsers = userRepository.count();
+        long totalItems = itemClient.countPublishedItems();
+        long totalAuctions = auctionClient.getAuctionStats().openAuctions();
+        double avgRating = reviewClient.getPlatformAverageRating();
+
+        return new PublicStatsDto(totalItems, totalAuctions, totalUsers, avgRating);
+    }
 }
