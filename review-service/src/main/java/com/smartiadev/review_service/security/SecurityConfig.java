@@ -34,6 +34,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
+                        .requestMatchers("/api/reviews/stats/public/**").permitAll()
                         .requestMatchers("/api/reviews/rental/**").permitAll()
 
                         // 🔓 Autoriser OPTIONS pour CORS

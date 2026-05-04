@@ -18,6 +18,9 @@ public class AdminStatsService {
     private final AuctionClient auctionClient;
     private final SubscriptionClient subscriptionClient;
     private final PaymentClient paymentClient;
+    private final ItemPublicClient itemPublicClient;
+    private final AuctionPublicClient auctionPublicClient;
+    private final ReviewPublicClient reviewPublicClient;
 
     public AdminStats getStats() {
 
@@ -71,9 +74,9 @@ public class AdminStatsService {
 
     public PublicStatsDto getPublicStats() {
         long totalUsers = userRepository.count();
-        long totalItems = itemClient.countPublishedItems();
-        long totalAuctions = auctionClient.getAuctionStats().openAuctions();
-        double avgRating = reviewClient.getPlatformAverageRating();
+        long totalItems = itemPublicClient.countPublishedItems();
+        long totalAuctions = auctionPublicClient.countOpenAuctions();
+        double avgRating = reviewPublicClient.getPlatformAverageRating();
 
         return new PublicStatsDto(totalItems, totalAuctions, totalUsers, avgRating);
     }

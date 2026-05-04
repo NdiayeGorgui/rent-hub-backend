@@ -39,6 +39,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/items/with-images"
                         ).permitAll()
+                        .requestMatchers(
+                                "/api/items/stats/public/**"
+                        ).permitAll()
 
                         // 🔐 routes sécurisées
                         .requestMatchers(
