@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "item-service")
+@FeignClient(name = "item-service", contextId = "itemAdminClient")
 public interface ItemClient {
 
     @GetMapping("/api/items/user/{userId}/published")

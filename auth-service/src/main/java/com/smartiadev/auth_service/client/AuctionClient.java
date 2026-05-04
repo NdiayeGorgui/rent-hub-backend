@@ -4,7 +4,7 @@ import com.smartiadev.auth_service.dto.AuctionStats;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
-@FeignClient(name = "auction-service")
+@FeignClient(name = "auction-service", contextId = "auctionAdminClient")
 public interface AuctionClient {
 
     @GetMapping("/api/auctions/internal/stats")
