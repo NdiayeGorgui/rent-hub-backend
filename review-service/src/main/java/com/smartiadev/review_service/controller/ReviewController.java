@@ -159,4 +159,9 @@ public class ReviewController {
 
         return reviewRepository.existsByRentalIdAndReviewerId(rentalId, userId);
     }
+
+    @GetMapping("/user/{userId}/all")
+    public List<ReviewDto> getAllReviewsForUser(@PathVariable UUID userId) {
+        return reviewService.getAllReviewsForUser(userId);
+    }
 }

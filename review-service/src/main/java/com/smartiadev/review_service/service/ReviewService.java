@@ -218,5 +218,12 @@ public class ReviewService {
         );
     }
 
+    // Tous les avis reçus par un user (sans filtre de type)
+    public List<ReviewDto> getAllReviewsForUser(UUID userId) {
+        return reviewRepository.findByReviewedUserId(userId)
+                .stream()
+                .map(this::mapToDto)
+                .toList();
+    }
 
 }
