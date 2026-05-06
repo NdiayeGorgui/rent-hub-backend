@@ -22,4 +22,6 @@ public class UserResponseDto {
     private LocalDateTime createdAt;
     private Set<String> roles;
     private String subscription;
+    private int auctionStrikes;
+    private boolean auctionRestricted;
 }

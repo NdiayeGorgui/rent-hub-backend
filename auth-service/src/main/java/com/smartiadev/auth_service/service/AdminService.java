@@ -63,6 +63,8 @@ public class AdminService {
                 .createdAt(user.getCreatedAt())
                 .roles(user.getRoles())
                 .subscription(premium ? "PREMIUM" : "STANDARD")
+                .auctionStrikes(user.getAuctionStrikes())
+                .auctionRestricted(user.isAuctionRestricted())
                 .build();
     }
 }
