@@ -25,15 +25,16 @@ public class AuctionStrikeConsumer {
 
         String message;
 
-        if (event.restricted()) {
+        int strikes = event.strikes();
 
+        if (strikes == 1) {
+            message = "⚠️ Vous avez reçu un avertissement suite à un non-respect d'engagement lors d'une enchère.";
+        } else if (strikes == 2) {
+            message = "⚠️ Vous avez reçu un deuxième avertissement. Attention, un troisième entraînera une suspension des enchères.";
+        } else if (strikes >= 3) {
             message = "⛔ Votre compte a été suspendu des enchères (3 manquements).";
-
         } else {
-
-            message = "⚠️ Vous avez reçu un avertissement car vous n'avez pas respecté un engagement lors d'une enchère.. "
-                    + "Strikes : " + event.strikes() + "/3"
-            +"Après 3 avertissements, la participation aux enchères sera suspendue.";
+            message = "⚠️ Avertissement enchère.";
         }
 
         Notification notification = repository.save(
@@ -47,14 +48,11 @@ public class AuctionStrikeConsumer {
                 )
         );
 
-        // Envoi WebSocket en temps réel
         messagingTemplate.convertAndSend(
                 "/topic/notifications/" + event.userId(),
                 notification
         );
 
-        System.out.println(
-                "⚠️ Notification strike envoyée à : " + event.userId()
-        );
+        System.out.println("⚠️ Notification strike envoyée à : " + event.userId());
     }
 }

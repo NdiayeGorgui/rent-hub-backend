@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.apache.kafka.common.requests.DeleteAclsResponse.log;
@@ -194,17 +195,15 @@ public class AuctionService {
 
     @Transactional
     public AuctionDto getActiveAuctionByItemId(Long itemId) {
-
-        Auction auction = auctionRepository
-                .findByItemIdAndStatus(itemId, AuctionStatus.OPEN)
-                .orElseThrow(() -> new RuntimeException("No active auction found"));
-
+        Optional<Auction> optionalAuction =
+                auctionRepository.findByItemIdAndStatus(itemId, AuctionStatus.OPEN);
+        if (optionalAuction.isEmpty()) {
+            return null; // ← pas d'exception
+        }
+        Auction auction = optionalAuction.get();
         int views = auction.getViews() == null ? 0 : auction.getViews();
-
         auction.setViews(views + 1);
-
         auctionRepository.save(auction);
-
         return map(auction);
     }
 

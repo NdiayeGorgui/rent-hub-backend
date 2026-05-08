@@ -94,8 +94,12 @@ public class AuctionController {
 
 
     @GetMapping("/by-item/{itemId}")
-    public AuctionDto getActiveByItemId(@PathVariable Long itemId) {
-        return service.getActiveAuctionByItemId(itemId);
+    public ResponseEntity<?> getByItem(@PathVariable Long itemId) {
+        AuctionDto auction = service.getActiveAuctionByItemId(itemId);
+        if (auction == null) {
+            return ResponseEntity.notFound().build(); // ← 404 propre
+        }
+        return ResponseEntity.ok(auction);
     }
 
     // Watch l'enchère
