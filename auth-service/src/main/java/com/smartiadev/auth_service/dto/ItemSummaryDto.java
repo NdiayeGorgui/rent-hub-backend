@@ -14,6 +14,7 @@ public class ItemSummaryDto {
     private String title;
     private Double pricePerDay;
     private Double averageRating;
+    private String type;
     private LocalDateTime createdAt; // pour items publiés
     private LocalDate startDate;     // pour rentals
     private LocalDate endDate;
