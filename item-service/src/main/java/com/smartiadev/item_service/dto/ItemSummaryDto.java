@@ -1,5 +1,6 @@
 package com.smartiadev.item_service.dto;
 
+import com.smartiadev.item_service.entity.ItemType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -14,6 +15,9 @@ public class ItemSummaryDto {
     private String title;
     private Double pricePerDay;
     private Double averageRating;
+
+    private ItemType type;
+
     private LocalDateTime createdAt; // pour items publiés
     private LocalDate startDate;     // pour rentals
     private LocalDate endDate;

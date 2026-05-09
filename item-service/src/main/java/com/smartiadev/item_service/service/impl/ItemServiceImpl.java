@@ -467,6 +467,7 @@ public class ItemServiceImpl implements ItemService {
                             item.getTitle(),
                             price,
                             ratings.getOrDefault(item.getId(), 0.0),
+                            item.getType(),
                             item.getCreatedAt(),
                             null,
                             null
