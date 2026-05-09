@@ -193,4 +193,16 @@ public class AuctionController {
     public List<AuctionDto> getAuctionsIParticipateIn(@AuthenticationPrincipal Jwt jwt) {
         return service.getAuctionsIParticipateIn(UUID.fromString(jwt.getSubject()));
     }
+
+    @GetMapping("/item/{itemId}")
+    public ResponseEntity<?> getAuction(@PathVariable Long itemId) {
+
+        AuctionDto auction = service.getAuctionByItemId(itemId);
+
+        if (auction == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(auction);
+    }
 }

@@ -12,7 +12,8 @@ import com.smartiadev.base_domain_service.dto.AuctionBidPlacedEvent;
 import com.smartiadev.base_domain_service.dto.AuctionCancellationRequestedEvent;
 import com.smartiadev.base_domain_service.dto.AuctionClosedEvent;
 import com.smartiadev.base_domain_service.dto.PaymentCompletedEvent;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -397,4 +398,17 @@ public class AuctionService {
                 .map(this::map)
                 .toList();
     }
+    @Transactional(readOnly = true)
+    public AuctionDto getAuctionByItemId(Long itemId) {
+
+        Auction auction = auctionRepository.findByItemId(itemId)
+                .orElse(null);
+
+        if (auction == null) {
+            return null;
+        }
+
+        return map(auction);
+    }
+
 }
