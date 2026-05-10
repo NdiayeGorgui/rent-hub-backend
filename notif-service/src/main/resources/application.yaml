@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: notif-service
+  jackson:
+    time-zone: America/Toronto
   config:
     import: optional:configserver:http://configuration-service:8888
 

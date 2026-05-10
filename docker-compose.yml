@@ -141,6 +141,8 @@ services:
       - "8081:8081"
     environment:
       - SERVER_PORT=8081
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_MAIL_HOST=mailhog
       - SPRING_MAIL_PORT=1025
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
@@ -179,6 +181,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
@@ -207,6 +211,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - UPLOAD_DIR=/app/uploads/
@@ -238,6 +244,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
@@ -270,6 +278,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
@@ -298,6 +308,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
@@ -328,6 +340,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=password
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_JPA_SHOW_SQL=true
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
@@ -356,6 +370,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
@@ -384,6 +400,8 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/renthub_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
@@ -413,6 +431,8 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=password
       - UPLOAD_DIR_MESSAGES=/app/uploads/messages/
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/

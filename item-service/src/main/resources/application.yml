@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: item-service
+  jackson:
+    time-zone: America/Toronto
   config:
     import: optional:configserver:http://configuration-service:8888
   servlet:
