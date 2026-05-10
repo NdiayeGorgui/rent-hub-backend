@@ -3,7 +3,6 @@ package com.smartiadev.rental_service.service.impl;
 import com.smartiadev.base_domain_service.dto.RentalApprovedEvent;
 import com.smartiadev.base_domain_service.dto.RentalCancelledByUserEvent;
 import com.smartiadev.base_domain_service.dto.RentalCancelledEvent;
-import com.smartiadev.base_domain_service.dto.RentalStartedEvent;
 import com.smartiadev.rental_service.client.ItemClient;
 import com.smartiadev.rental_service.client.ReviewClient;
 import com.smartiadev.rental_service.dto.*;
@@ -153,17 +152,16 @@ public class RentalServiceImpl implements RentalService {
         // 🔐 sécurité propriétaire
         System.out.println("JWT OWNER ID: " + ownerId);
         System.out.println("RENTAL OWNER ID: " + rental.getOwnerId());
-
         if (!rental.getOwnerId().equals(ownerId)) {
             throw new RuntimeException("Forbidden");
         }
 
-        // 🚫 déjà traité
+        // 🚫 déjà approuvé ou en cours
         if (rental.getStatus() != RentalStatus.CREATED) {
             throw new RuntimeException("Rental cannot be approved");
         }
 
-        // 🔒 vérifie si l’item est déjà loué
+        // 🔒 vérifie si l’item est déjà verrouillé
         boolean alreadyLocked = repository.existsByItemIdAndStatusIn(
                 rental.getItemId(),
                 List.of(
@@ -176,30 +174,11 @@ public class RentalServiceImpl implements RentalService {
             throw new RuntimeException("Item already rented");
         }
 
-        // =========================================================
-        // ✅ CAS IMPORTANT :
-        // si la date de début est aujourd’hui ou passée,
-        // on passe directement à ONGOING
-        // =========================================================
-
-        LocalDate today = LocalDate.now();
-
-        RentalStatus newStatus;
-
-        if (!rental.getStartDate().isAfter(today)) {
-            newStatus = RentalStatus.ONGOING;
-        } else {
-            newStatus = RentalStatus.APPROVED;
-        }
-
-        rental.setStatus(newStatus);
-
+        // ✅ APPROUVE LA LOCATION
+        rental.setStatus(RentalStatus.APPROVED);
         repository.save(rental);
 
-        // =========================================================
         // ❌ AUTO-CANCEL des autres demandes
-        // =========================================================
-
         List<Rental> others =
                 repository.findByItemIdAndStatus(
                         rental.getItemId(),
@@ -208,7 +187,6 @@ public class RentalServiceImpl implements RentalService {
 
         others.forEach(r -> {
             if (!r.getId().equals(rental.getId())) {
-
                 r.setStatus(RentalStatus.CANCELLED);
 
                 eventProducer.sendRentalCancelled(
@@ -222,35 +200,18 @@ public class RentalServiceImpl implements RentalService {
             }
         });
 
+
         repository.saveAll(others);
 
-        // =========================================================
-        // 📣 EVENTS KAFKA
-        // =========================================================
-
-        if (newStatus == RentalStatus.APPROVED) {
-
-            eventProducer.sendRentalApproved(
-                    new RentalApprovedEvent(
-                            rental.getId(),
-                            rental.getItemId(),
-                            rental.getOwnerId(),
-                            rental.getRenterId()
-                    )
-            );
-
-        } else {
-
-            // directement démarrée
-            eventProducer.sendRentalStarted(
-                    new RentalStartedEvent(
-                            rental.getId(),
-                            rental.getItemId(),
-                            rental.getOwnerId(),
-                            rental.getRenterId()
-                    )
-            );
-        }
+        // 📣 EVENT KAFKA
+        eventProducer.sendRentalApproved(
+                new RentalApprovedEvent(
+                        rental.getId(),
+                        rental.getItemId(),
+                        rental.getOwnerId(),
+                        rental.getRenterId()
+                )
+        );
     }
     @Override
     public RentalResponseDTO getRentalById(Long id) {
