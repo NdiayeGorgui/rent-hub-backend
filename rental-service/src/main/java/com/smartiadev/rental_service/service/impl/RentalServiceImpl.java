@@ -3,6 +3,7 @@ package com.smartiadev.rental_service.service.impl;
 import com.smartiadev.base_domain_service.dto.RentalApprovedEvent;
 import com.smartiadev.base_domain_service.dto.RentalCancelledByUserEvent;
 import com.smartiadev.base_domain_service.dto.RentalCancelledEvent;
+import com.smartiadev.base_domain_service.dto.RentalStartedEvent;
 import com.smartiadev.rental_service.client.ItemClient;
 import com.smartiadev.rental_service.client.ReviewClient;
 import com.smartiadev.rental_service.dto.*;
@@ -175,8 +176,36 @@ public class RentalServiceImpl implements RentalService {
         }
 
         // ✅ APPROUVE LA LOCATION
-        rental.setStatus(RentalStatus.APPROVED);
-        repository.save(rental);
+        if (rental.getStartDate().isEqual(LocalDate.now())) {
+
+            rental.setStatus(RentalStatus.ONGOING);
+
+            repository.save(rental);
+
+            eventProducer.sendRentalStarted(
+                    new RentalStartedEvent(
+                            rental.getId(),
+                            rental.getItemId(),
+                            rental.getOwnerId(),
+                            rental.getRenterId()
+                    )
+            );
+
+        } else {
+
+            rental.setStatus(RentalStatus.APPROVED);
+
+            repository.save(rental);
+
+            eventProducer.sendRentalApproved(
+                    new RentalApprovedEvent(
+                            rental.getId(),
+                            rental.getItemId(),
+                            rental.getOwnerId(),
+                            rental.getRenterId()
+                    )
+            );
+        }
 
         // ❌ AUTO-CANCEL des autres demandes
         List<Rental> others =
@@ -203,7 +232,7 @@ public class RentalServiceImpl implements RentalService {
 
         repository.saveAll(others);
 
-        // 📣 EVENT KAFKA
+       /* // 📣 EVENT KAFKA
         eventProducer.sendRentalApproved(
                 new RentalApprovedEvent(
                         rental.getId(),
@@ -211,7 +240,7 @@ public class RentalServiceImpl implements RentalService {
                         rental.getOwnerId(),
                         rental.getRenterId()
                 )
-        );
+        );*/
     }
     @Override
     public RentalResponseDTO getRentalById(Long id) {
