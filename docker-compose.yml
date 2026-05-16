@@ -73,7 +73,7 @@ services:
   # ========================
   eureka-registry:
     container_name: eureka-registry
-    image: gorgui/eureka-registry:latest
+    image: smartiadev/eureka-registry:latest
     ports:
       - "8761:8761"
     networks:
@@ -90,7 +90,7 @@ services:
   # ========================
   configuration-service:
     container_name: configuration-service
-    image: gorgui/configuration-service:latest
+    image: smartiadev/configuration-service:latest
     ports:
       - "8888:8888"
     environment:
@@ -104,18 +104,18 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://configuration-service:8888/actuator/health" ]
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1" ]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 60s
+      retries: 15
+      start_period: 120s
 
   # ========================
   # 🚪 API GATEWAY
   # ========================
   api-gateway:
     container_name: api-gateway
-    image: gorgui/api-gateway:latest
+    image: smartiadev/api-gateway:latest
     ports:
       - "8080:8080"
     environment:
@@ -136,7 +136,7 @@ services:
   # ========================
   auth-service:
     container_name: auth-service
-    image: gorgui/auth-service:latest
+    image: smartiadev/auth-service:latest
     ports:
       - "8081:8081"
     environment:
@@ -174,7 +174,7 @@ services:
   # ========================
   auction-service:
     container_name: auction-service
-    image: gorgui/auction-service:latest
+    image: smartiadev/auction-service:latest
     ports:
       - "8088:8088"
     environment:
@@ -204,7 +204,7 @@ services:
   # ========================
   item-service:
     container_name: item-service
-    image: gorgui/item-service:latest
+    image: smartiadev/item-service:latest
     ports:
       - "8082:8082"
     environment:
@@ -237,7 +237,7 @@ services:
   # ========================
   payments-service:
     container_name: payments-service
-    image: gorgui/payments-service:latest
+    image: smartiadev/payments-service:latest
     ports:
       - "8087:8087"
     environment:
@@ -250,7 +250,6 @@ services:
       - JWT_SECRET=HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888/
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}      # ← lu depuis .env
       - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
@@ -271,7 +270,7 @@ services:
   # ========================
   notif-service:
     container_name: notif-service
-    image: gorgui/notif-service:latest
+    image: smartiadev/notif-service:latest
     ports:
       - "8085:8085"
     environment:
@@ -301,7 +300,7 @@ services:
   # ========================
   dispute-service:
     container_name: dispute-service
-    image: gorgui/dispute-service:latest
+    image: smartiadev/dispute-service:latest
     ports:
       - "8086:8086"
     environment:
@@ -331,7 +330,7 @@ services:
   # ========================
   rental-service:
     container_name: rental-service
-    image: gorgui/rental-service:latest
+    image: smartiadev/rental-service:latest
     ports:
       - "8083:8083"
     environment:
@@ -363,7 +362,7 @@ services:
   # ========================
   review-service:
     container_name: review-service
-    image: gorgui/review-service:latest
+    image: smartiadev/review-service:latest
     ports:
       - "8084:8084"
     environment:
@@ -393,7 +392,7 @@ services:
   # ========================
   subscription-service:
     container_name: subscription-service
-    image: gorgui/subscription-service:latest
+    image: smartiadev/subscription-service:latest
     ports:
       - "8089:8089"
     environment:
@@ -423,7 +422,7 @@ services:
   # ========================
   messaging-service:
     container_name: messaging-service
-    image: gorgui/messaging-service:latest
+    image: smartiadev/messaging-service:latest
     ports:
       - "8090:8090"
     environment:
