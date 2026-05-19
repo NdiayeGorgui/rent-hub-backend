@@ -10,9 +10,9 @@ spring:
     import: optional:configserver:http://configuration-service:8888
 
   datasource:
-    url: jdbc:postgresql://postgres:5432/renthub_db
-    username: postgres
-    password: password
+    url: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
 
   jpa:
     hibernate:
@@ -37,7 +37,7 @@ eureka:
       defaultZone: http://eureka-registry:8761/eureka/
 
 jwt:
-  secret: HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
+  secret: ${JWT_SECRET}
   expiration: 86400000
 
 management:
