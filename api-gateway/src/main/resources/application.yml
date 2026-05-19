@@ -213,7 +213,7 @@ springdoc:
         url: /messaging-service/v3/api-docs
 
 jwt:
-  secret: HzuHlbBi+nyXGNVWXYo9I7ojNnxfE8FVnmt1jV0nMeU=
+  secret: ${JWT_SECRET}
 
 eureka:
   client:
