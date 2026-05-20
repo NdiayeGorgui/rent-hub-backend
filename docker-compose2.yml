@@ -10,17 +10,17 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5432:5432"
+    # ← pas de ports exposés en prod
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - my_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: always
 
   # ========================
   # 🟡 KAFKA
@@ -29,53 +29,35 @@ services:
     image: apache/kafka:3.7.0
     container_name: kafka
     hostname: kafka
-    ports:
-      - "9092:9092"
+    # ← pas de ports exposés en prod
     volumes:
       - kafka_data:/var/lib/kafka/data
     environment:
-      # ===== KRaft =====
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-
-      # ⚠️ ID VALIDE (22 chars)
       KAFKA_CLUSTER_ID: q1Sh-9_ISia_zwGINzRvyQ
-
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-
-      # ===== LISTENERS =====
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-
-      # ===== DEV =====
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     networks:
       - my_network
+    restart: always
 
-  # ========================
-  # 🔵 MAILHOG
-  # ========================
-  mailhog:
-    image: mailhog/mailhog
-    container_name: mailhog
-    ports:
-      - "1025:1025"  # SMTP
-      - "8025:8025"  # UI web
-    networks:
-      - my_network
+  # ← MAILHOG SUPPRIMÉ — remplacé par vrai SMTP
+
   # ========================
   # 🔵 EUREKA
   # ========================
   eureka-registry:
     container_name: eureka-registry
     image: smartiadev/eureka-registry:latest
-    ports:
-      - "8761:8761"
+    # ← pas de ports exposés en prod
     networks:
       - my_network
     healthcheck:
@@ -84,6 +66,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+    restart: always
 
   # ========================
   # ⚙️ CONFIG SERVER
@@ -91,8 +74,6 @@ services:
   configuration-service:
     container_name: configuration-service
     image: smartiadev/configuration-service:latest
-    ports:
-      - "8888:8888"
     environment:
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CLOUD_CONFIG_ENABLED=false
@@ -104,11 +85,12 @@ services:
     networks:
       - my_network
     healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1" ]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8888/actuator/health || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 15
       start_period: 120s
+    restart: always
 
   # ========================
   # 🚪 API GATEWAY
@@ -117,19 +99,24 @@ services:
     container_name: api-gateway
     image: smartiadev/api-gateway:latest
     ports:
-      - "9191:9191"
+      - "8080:8080"  # ← seul port exposé, Coolify proxy ici
     environment:
       - JWT_SECRET=${JWT_SECRET}
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
       - SPRING_CODEC_MAX_IN_MEMORY_SIZE=52428800
+      - TZ=America/Toronto
+      - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
     depends_on:
       eureka-registry:
         condition: service_healthy
       configuration-service:
         condition: service_healthy
+    labels:
+      - "coolify.expose=true"  # ← Coolify expose ce service via son proxy
     networks:
       - my_network
+    restart: always
 
   # ========================
   # 🔐 AUTH SERVICE
@@ -137,21 +124,21 @@ services:
   auth-service:
     container_name: auth-service
     image: smartiadev/auth-service:latest
-    ports:
-      - "8081:8081"
     environment:
       - SERVER_PORT=8081
       - TZ=America/Toronto
       - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
-      - SPRING_MAIL_HOST=mailhog
-      - SPRING_MAIL_PORT=1025
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      - SPRING_MAIL_HOST=${MAIL_HOST}
+      - SPRING_MAIL_PORT=${MAIL_PORT}
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE=true
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}?currentSchema=auth_schema
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_JPA_DEFER_DATASOURCE_INITIALIZATION=true
       - SPRING_SQL_INIT_MODE=never
       - SPRING_DATASOURCE_INITIALIZATION_MODE=never
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}?currentSchema=auth_schema
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=86400000
@@ -168,6 +155,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # 🧾 AUCTION SERVICE
@@ -175,8 +163,6 @@ services:
   auction-service:
     container_name: auction-service
     image: smartiadev/auction-service:latest
-    ports:
-      - "8088:8088"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
@@ -198,6 +184,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # 📦 ITEM SERVICE
@@ -205,8 +192,6 @@ services:
   item-service:
     container_name: item-service
     image: smartiadev/item-service:latest
-    ports:
-      - "8082:8082"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
@@ -219,7 +204,7 @@ services:
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     volumes:
-      - item_uploads:/app/uploads   # ← volume persistant
+      - item_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -231,6 +216,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # 💳 PAYMENTS SERVICE
@@ -238,8 +224,6 @@ services:
   payments-service:
     container_name: payments-service
     image: smartiadev/payments-service:latest
-    ports:
-      - "8087:8087"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
@@ -250,7 +234,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}      # ← lu depuis .env
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
     depends_on:
@@ -264,6 +248,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # 🔔 NOTIF SERVICE
@@ -271,8 +256,6 @@ services:
   notif-service:
     container_name: notif-service
     image: smartiadev/notif-service:latest
-    ports:
-      - "8085:8085"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
@@ -281,6 +264,11 @@ services:
       - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=${JWT_SECRET}
+      - SPRING_MAIL_HOST=${MAIL_HOST}
+      - SPRING_MAIL_PORT=${MAIL_PORT}
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE=true
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
@@ -294,6 +282,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # ⚖️ DISPUTE SERVICE
@@ -301,8 +290,6 @@ services:
   dispute-service:
     container_name: dispute-service
     image: smartiadev/dispute-service:latest
-    ports:
-      - "8086:8086"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
@@ -324,6 +311,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # 🏠 RENTAL SERVICE
@@ -331,14 +319,12 @@ services:
   rental-service:
     container_name: rental-service
     image: smartiadev/rental-service:latest
-    ports:
-      - "8083:8083"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}?currentSchema=rental_schema
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_JPA_SHOW_SQL=false
       - TZ=America/Toronto
       - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
@@ -356,6 +342,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # ⭐ REVIEW SERVICE
@@ -363,8 +350,6 @@ services:
   review-service:
     container_name: review-service
     image: smartiadev/review-service:latest
-    ports:
-      - "8084:8084"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
@@ -386,6 +371,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # 📋 SUBSCRIPTION SERVICE
@@ -393,8 +379,6 @@ services:
   subscription-service:
     container_name: subscription-service
     image: smartiadev/subscription-service:latest
-    ports:
-      - "8089:8089"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
@@ -403,6 +387,7 @@ services:
       - JAVA_TOOL_OPTIONS=-Duser.timezone=America/Toronto
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - JWT_SECRET=${JWT_SECRET}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     depends_on:
@@ -416,6 +401,7 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
 
   # ========================
   # 💬 MESSAGING SERVICE
@@ -423,8 +409,6 @@ services:
   messaging-service:
     container_name: messaging-service
     image: smartiadev/messaging-service:latest
-    ports:
-      - "8090:8090"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
@@ -437,7 +421,7 @@ services:
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
     volumes:
-      - item_uploads:/app/uploads/messages
+      - message_uploads:/app/uploads/messages
     depends_on:
       postgres:
         condition: service_healthy
@@ -449,11 +433,27 @@ services:
         condition: service_started
     networks:
       - my_network
+    restart: always
+  # ── Frontend Web ──────────────────────────────────────
+  renthub-web:
+    container_name: renthub-web
+    image: smartiadev/renthub-web:latest
+    ports:
+      - "3000:3000"
+    restart: always
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api.gonifty.ca
+    labels:
+      - "coolify.expose=true"
+    networks:
+      - my_network
+
 
 volumes:
   kafka_data:
   postgres_data:
   item_uploads:
+  message_uploads:   # ← volume séparé pour les messages
 
 networks:
   my_network:
