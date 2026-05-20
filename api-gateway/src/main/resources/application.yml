@@ -186,7 +186,7 @@ spring:
             - Path=/ws-chat/**
 
 server:
-  port: 8080
+  port: 9191
 
 springdoc:
   swagger-ui:
