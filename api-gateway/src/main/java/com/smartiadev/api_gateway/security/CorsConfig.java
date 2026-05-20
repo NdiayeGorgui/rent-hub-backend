@@ -21,6 +21,10 @@ public class CorsConfig {
         config.addAllowedOrigin("http://192.168.0.118:9191"); // ← ajoute
         config.addAllowedOrigin("http://10.0.2.2:9191");      // ← ajoute
         config.addAllowedOrigin("http://localhost:9191");      // ← ajoute
+
+        config.addAllowedOrigin("https://gonifty.ca");
+        config.addAllowedOrigin("https://www.gonifty.ca");
+        config.addAllowedOrigin("https://api.gonifty.ca");
        
 
         config.addAllowedMethod("*");
