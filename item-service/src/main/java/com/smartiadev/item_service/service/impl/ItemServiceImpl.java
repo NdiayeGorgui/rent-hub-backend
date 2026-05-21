@@ -13,6 +13,7 @@ import com.smartiadev.item_service.service.ImageStorageService;
 import com.smartiadev.item_service.service.ItemService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -33,7 +34,9 @@ public class ItemServiceImpl implements ItemService {
     private final SubscriptionClient subscriptionClient;
     private final AuctionClient  auctionClient;
     private final ImageStorageService imageStorageService;
-    private static final String ITEM_SERVICE_BASE_URL = "http://localhost:8080"; // gateway
+   // private static final String ITEM_SERVICE_BASE_URL = "http://localhost:8080"; // gateway
+   @Value("${app.public.base-url}")
+   private String publicBaseUrl;
     private final ObjectMapper objectMapper;
     private final GeocodingService geocodingService;
     /* =====================
@@ -434,7 +437,7 @@ public class ItemServiceImpl implements ItemService {
             String imageUrl = null;
             if (item.getImageUrls() != null && !item.getImageUrls().isEmpty()) {
                 // Ici on prend la première image et on préfixe avec l'URL du gateway
-                imageUrl = ITEM_SERVICE_BASE_URL + item.getImageUrls().get(0);
+                imageUrl = publicBaseUrl  + item.getImageUrls().get(0);
             }
 
             return new ItemSearchResponseDto(

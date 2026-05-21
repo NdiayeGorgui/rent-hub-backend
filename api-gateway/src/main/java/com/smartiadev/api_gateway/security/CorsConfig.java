@@ -12,6 +12,7 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
+        // ===== DEV =====
         config.addAllowedOrigin("http://localhost:8181");
         config.addAllowedOrigin("http://renthub-mobile:8181");
         config.addAllowedOrigin("http://localhost:3000");
@@ -22,6 +23,7 @@ public class CorsConfig {
         config.addAllowedOrigin("http://10.0.2.2:9191");      // ← ajoute
         config.addAllowedOrigin("http://localhost:9191");      // ← ajoute
 
+        // ===== PROD =====
         config.addAllowedOrigin("https://gonifty.ca");
         config.addAllowedOrigin("https://www.gonifty.ca");
         config.addAllowedOrigin("https://api.gonifty.ca");
