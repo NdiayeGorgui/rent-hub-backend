@@ -15,6 +15,9 @@ public class ReviewStatsService {
     }
 
     public Double getPlatformAverageRating() {
-        return reviewRepository.getPlatformAverageRating();
+
+        Double avg = reviewRepository.getPlatformAverageRating();
+
+        return avg != null ? avg : 0.0;
     }
 }

@@ -73,11 +73,39 @@ public class AdminStatsService {
     }
 
     public PublicStatsDto getPublicStats() {
-        long totalUsers = userRepository.count();
-        long totalItems = itemPublicClient.countPublishedItems();
-        long totalAuctions = auctionPublicClient.countOpenAuctions();
-        double avgRating = reviewPublicClient.getPlatformAverageRating();
 
-        return new PublicStatsDto(totalItems, totalAuctions, totalUsers, avgRating);
+        long totalUsers = userRepository.count();
+
+        long totalItems = 0;
+        long totalAuctions = 0;
+        double avgRating = 0;
+
+        try {
+            totalItems = itemPublicClient.countPublishedItems();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            totalAuctions = auctionPublicClient.countOpenAuctions();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Double response = reviewPublicClient.getPlatformAverageRating();
+
+            avgRating = response != null ? response : 0.0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return new PublicStatsDto(
+                totalItems,
+                totalAuctions,
+                totalUsers,
+                avgRating
+        );
     }
 }

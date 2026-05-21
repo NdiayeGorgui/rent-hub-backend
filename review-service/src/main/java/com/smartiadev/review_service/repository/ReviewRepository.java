@@ -58,7 +58,7 @@ public interface ReviewRepository
     Long countAllReviews();
 
     // Note moyenne globale (plateforme)
-    @Query("SELECT AVG(r.rating) FROM Review r")
+    @Query("SELECT COALESCE(AVG(r.rating), 0) FROM Review r")
     Double getPlatformAverageRating();
 
 
