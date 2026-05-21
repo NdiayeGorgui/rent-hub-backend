@@ -179,16 +179,20 @@ public class AuthService {
         userRepository.save(user);
 
         // Envoie le mail
+        String resetLink = "https://app.gonifty.ca/reset-password?token=" + token;
+
         SimpleMailMessage mail = new SimpleMailMessage();
+        mail.setFrom("team.smartiadev@gmail.com");  // ← déjà fait ✅
         mail.setTo(user.getEmail());
         mail.setSubject("Réinitialisation de votre mot de passe - RentHub");
         mail.setText(
                 "Bonjour " + user.getFullName() + ",\n\n" +
                         "Vous avez demandé une réinitialisation de mot de passe.\n\n" +
-                        "Votre token de réinitialisation : " + token + "\n\n" +
-                        "Ce token expire dans 15 minutes.\n\n" +
+                        "Cliquez sur ce lien pour réinitialiser votre mot de passe :\n" +
+                        resetLink + "\n\n" +
+                        "Ce lien expire dans 15 minutes.\n\n" +
                         "Si vous n'avez pas fait cette demande, ignorez cet email.\n\n" +
-                        "L'équipe RentHub"
+                        "L'équipe Gonifty"
         );
         mailSender.send(mail);
     }

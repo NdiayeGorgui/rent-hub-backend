@@ -4,16 +4,20 @@ spring:
   jackson:
     time-zone: America/Toronto
   mail:
-    host: mailhog
-    port: 1025
-    username: ""
-    password: ""
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
-          auth: false
+          auth: true
           starttls:
-            enable: false
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
   config:
     import: "optional:configserver:http://configuration-service:8888"
   datasource:
