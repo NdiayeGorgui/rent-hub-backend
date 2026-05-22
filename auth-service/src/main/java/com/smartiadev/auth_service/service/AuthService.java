@@ -11,6 +11,7 @@ import com.smartiadev.auth_service.security.JwtService;
 import com.smartiadev.base_domain_service.dto.AuctionStrikeEvent;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -25,21 +26,20 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuctionEventPublisher auctionEventPublisher;
-    private final JavaMailSender mailSender;
+
+    private JavaMailSender mailSender;
 
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Cet email est déjà utilisé"
-            );
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cet email est déjà utilisé");
         }
 
         User user = User.builder()
@@ -56,11 +56,39 @@ public class AuthService {
 
         userRepository.save(user);
 
-        String token = jwtService.generateToken(user);
+        // ← Envoie le mail de bienvenue
+        sendWelcomeEmail(user);
 
+        String token = jwtService.generateToken(user);
         return new AuthResponse(token);
     }
 
+    private void sendWelcomeEmail(User user) {
+        try {
+            SimpleMailMessage mail = new SimpleMailMessage();
+            mail.setFrom("team.smartiadev@gmail.com");
+            mail.setTo(user.getEmail());
+            mail.setSubject("Bienvenue sur Gonifty 🎉");
+            mail.setText(
+                    "Bonjour " + user.getFullName() + ",\n\n" +
+                            "Bienvenue sur Gonifty ! 🎉\n\n" +
+                            "Votre compte a été créé avec succès.\n\n" +
+                            "📧 Email : " + user.getEmail() + "\n" +
+                            "👤 Pseudo : @" + user.getUsername() + "\n\n" +
+                            "Vous pouvez dès maintenant :\n" +
+                            "• Publier des items à louer\n" +
+                            "• Parcourir les annonces\n" +
+                            "• Passer Premium pour participer aux enchères\n\n" +
+                            "Accédez à l'application : https://app.gonifty.ca\n\n" +
+                            "À bientôt sur RentHub !\n" +
+                            "L'équipe Gonifty"
+            );
+            mailSender.send(mail);
+        } catch (Exception e) {
+            // Ne pas bloquer l'inscription si le mail échoue
+            log.warn("Impossible d'envoyer le mail de bienvenue à {}", user.getEmail());
+        }
+    }
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.email())
@@ -184,7 +212,7 @@ public class AuthService {
         SimpleMailMessage mail = new SimpleMailMessage();
         mail.setFrom("team.smartiadev@gmail.com");  // ← déjà fait ✅
         mail.setTo(user.getEmail());
-        mail.setSubject("Réinitialisation de votre mot de passe - RentHub");
+        mail.setSubject("Réinitialisation de votre mot de passe - Gonifty");
         mail.setText(
                 "Bonjour " + user.getFullName() + ",\n\n" +
                         "Vous avez demandé une réinitialisation de mot de passe.\n\n" +
