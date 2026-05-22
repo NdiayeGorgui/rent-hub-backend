@@ -33,8 +33,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuctionEventPublisher auctionEventPublisher;
-
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -89,6 +88,7 @@ public class AuthService {
             log.warn("Impossible d'envoyer le mail de bienvenue à {}", user.getEmail());
         }
     }
+
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.email())
