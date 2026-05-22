@@ -80,7 +80,7 @@ public class AuthService {
                             "• Parcourir les annonces\n" +
                             "• Passer Premium pour participer aux enchères\n\n" +
                             "Accédez à l'application : https://app.gonifty.ca\n\n" +
-                            "À bientôt sur RentHub !\n" +
+                            "À bientôt sur Gonifty !\n" +
                             "L'équipe Gonifty"
             );
             mailSender.send(mail);
