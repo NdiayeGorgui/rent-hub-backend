@@ -219,6 +219,8 @@ public class AuthService {
                         "Cliquez sur ce lien pour réinitialiser votre mot de passe :\n" +
                         resetLink + "\n\n" +
                         "Ce lien expire dans 15 minutes.\n\n" +
+                        "\n\n" +
+                        "Oubien copier ce token:" + token+"\n\n" +
                         "Si vous n'avez pas fait cette demande, ignorez cet email.\n\n" +
                         "L'équipe Gonifty"
         );
