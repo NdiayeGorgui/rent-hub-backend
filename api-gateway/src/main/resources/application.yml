@@ -169,6 +169,13 @@ spring:
           filters:
             - RewritePath=/messaging-service/v3/api-docs, /v3/api-docs
 
+        - id: contact-public
+          uri: http://messaging-service:8090
+          predicates:
+            - Path=/api/messages/contact
+          filters:
+            - RemoveRequestHeader=Authorization
+
         # =========================
         # NOTIFICATION WEBSOCKET
         # =========================

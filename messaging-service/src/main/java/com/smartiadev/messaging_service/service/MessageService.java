@@ -7,6 +7,10 @@ import com.smartiadev.messaging_service.entity.Message;
 import com.smartiadev.messaging_service.repository.ConversationRepository;
 import com.smartiadev.messaging_service.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,12 +22,18 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MessageService {
 
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
     private final UserClient userClient;
     private final ImageStorageService imageStorageService;
+
+    @Value("${MAIL_USERNAME}")
+    private String adminEmail;
+
+    private final JavaMailSender mailSender;
 
     public MessageResponse sendMessage(UUID senderId, MessageRequest request) {
 
@@ -429,5 +439,42 @@ public class MessageService {
                 message.getTimestamp(),
                 message.isRead()
         );
+    }
+
+    public void sendContact(ContactRequest request) {
+
+        log.info("📩 Nouveau message de contact reçu de {}", request.email());
+
+        // Mail vers admin
+        SimpleMailMessage mail = new SimpleMailMessage();
+        mail.setFrom(request.email());
+        mail.setTo(adminEmail);
+        mail.setSubject("[Gonifty Contact] " + request.subject());
+        mail.setText(
+                "De : " + request.firstName() + " " + request.lastName() + "\n" +
+                        "Email : " + request.email() + "\n" +
+                        "Sujet : " + request.subject() + "\n\n" +
+                        "Message :\n" + request.message()
+        );
+
+        mailSender.send(mail);
+
+        log.info("✅ Mail contact envoyé à l'administrateur");
+
+        // Confirmation utilisateur
+        SimpleMailMessage confirm = new SimpleMailMessage();
+        confirm.setTo(request.email());
+        confirm.setSubject("Nous avons bien reçu votre message — Gonifty");
+        confirm.setText(
+                "Bonjour " + request.firstName() + ",\n\n" +
+                        "Merci de nous avoir contactés. Nous avons bien reçu votre message et " +
+                        "vous répondrons dans les meilleurs délais.\n\n" +
+                        "Sujet : " + request.subject() + "\n\n" +
+                        "L'équipe Gonifty"
+        );
+
+        mailSender.send(confirm);
+
+        log.info("✅ Mail de confirmation envoyé à {}", request.email());
     }
 }

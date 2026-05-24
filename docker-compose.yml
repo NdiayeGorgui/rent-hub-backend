@@ -436,6 +436,9 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - eureka.client.service-url.defaultZone=http://eureka-registry:8761/eureka/
       - SPRING_CONFIG_IMPORT=optional:configserver:http://configuration-service:8888
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+
     volumes:
       - item_uploads:/app/uploads/messages
     depends_on:
