@@ -43,4 +43,9 @@ public class NewsletterController {
     public ResponseEntity<List<String>> getSubscribers() {
         return ResponseEntity.ok(newsletterService.getSubscribers());
     }
+
+    @GetMapping("/status")
+    public ResponseEntity<Boolean> isSubscribed(@RequestParam String email) {
+        return ResponseEntity.ok(newsletterService.isSubscribed(email));
+    }
 }

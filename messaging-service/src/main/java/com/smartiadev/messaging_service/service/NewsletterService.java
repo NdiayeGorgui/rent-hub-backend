@@ -9,6 +9,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -29,15 +30,71 @@ public class NewsletterService {
                     NewsletterSubscriber.builder()
                             .email(email)
                             .active(true)
+                            .subscribedAt(LocalDateTime.now())
                             .build()
             );
+
+            try {
+
+                SimpleMailMessage mail = new SimpleMailMessage();
+
+                mail.setFrom(fromEmail);
+
+                mail.setTo(email);
+
+                mail.setSubject("Bienvenue dans l’infolettre Gonifty 🎉");
+
+                mail.setText(
+                        "Bonjour,\n\n" +
+                                "Merci de vous être inscrit à l’infolettre Gonifty.\n\n" +
+                                "Vous recevrez :\n" +
+                                "- les meilleures annonces\n" +
+                                "- les nouvelles enchères\n" +
+                                "- des conseils\n" +
+                                "- les nouveautés Gonifty\n\n" +
+                                "Merci ❤️\n\n" +
+                                "L’équipe Gonifty"
+                );
+
+                mailSender.send(mail);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     public void unsubscribe(String email) {
-        repository.findByEmail(email).ifPresent(s -> {
-            s.setActive(false);
-            repository.save(s);
+
+        repository.findByEmail(email).ifPresent(subscriber -> {
+
+            subscriber.setActive(false);
+
+            repository.save(subscriber);
+
+            try {
+
+                SimpleMailMessage mail = new SimpleMailMessage();
+
+                mail.setFrom(fromEmail);
+
+                mail.setTo(email);
+
+                mail.setSubject("Désabonnement à l’infolettre Gonifty");
+
+                mail.setText(
+                        "Bonjour,\n\n" +
+                                "Votre désabonnement à l’infolettre Gonifty a bien été pris en compte.\n\n" +
+                                "Nous sommes désolés de vous voir partir 😢\n\n" +
+                                "Vous pouvez vous réabonner à tout moment sur Gonifty.\n\n" +
+                                "L’équipe Gonifty ❤️"
+                );
+
+                mailSender.send(mail);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 
@@ -63,5 +120,11 @@ public class NewsletterService {
                 // Continue même si un email échoue
             }
         }
+    }
+
+    public boolean isSubscribed(String email) {
+        return repository.findByEmail(email)
+                .map(NewsletterSubscriber::isActive)
+                .orElse(false);
     }
 }
