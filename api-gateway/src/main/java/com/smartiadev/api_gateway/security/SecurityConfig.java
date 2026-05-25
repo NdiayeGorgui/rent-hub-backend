@@ -70,6 +70,7 @@ public class SecurityConfig {
 
                         .pathMatchers("/api/payments/stripe/webhook").permitAll()
                         .pathMatchers("/api/messages/contact").permitAll()
+                        .pathMatchers("/api/newsletter/**").permitAll()
 
                         // 🔓 AUTH PUBLIC
                         .pathMatchers(
