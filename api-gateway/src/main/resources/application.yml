@@ -179,7 +179,7 @@ spring:
         - id: newsletter-public
           uri: http://messaging-service:8090
           predicates:
-            - Path=/api/newsletter/subscribe, /api/newsletter/unsubscribe
+            - Path=/api/newsletter/**
           filters:
             - RemoveRequestHeader=Authorization
 
