@@ -183,6 +183,13 @@ spring:
           filters:
             - RemoveRequestHeader=Authorization
 
+        - id: newsletter2-public
+          uri: http://messaging-service:8090
+          predicates:
+            - Path=/api/news-letter/**
+          filters:
+            - RemoveRequestHeader=Authorization
+
         # =========================
         # NOTIFICATION WEBSOCKET
         # =========================
