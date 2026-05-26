@@ -24,8 +24,44 @@ public class NewsletterService {
 
     public void subscribe(String email) {
 
-        if (!repository.existsByEmail(email)) {
+        repository.findByEmail(email).ifPresentOrElse(subscriber -> {
 
+            // Si déjà existant mais désactivé → réactiver
+            if (!subscriber.isActive()) {
+
+                subscriber.setActive(true);
+
+                subscriber.setSubscribedAt(LocalDateTime.now());
+
+                repository.save(subscriber);
+
+                try {
+
+                    SimpleMailMessage mail = new SimpleMailMessage();
+
+                    mail.setFrom(fromEmail);
+
+                    mail.setTo(email);
+
+                    mail.setSubject("Réabonnement à l’infolettre Gonifty 🎉");
+
+                    mail.setText(
+                            "Bonjour,\n\n" +
+                                    "Votre abonnement à l’infolettre Gonifty a été réactivé.\n\n" +
+                                    "Merci de nous rejoindre à nouveau ❤️\n\n" +
+                                    "L’équipe Gonifty"
+                    );
+
+                    mailSender.send(mail);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }, () -> {
+
+            // Nouvel abonnement
             repository.save(
                     NewsletterSubscriber.builder()
                             .email(email)
@@ -61,7 +97,7 @@ public class NewsletterService {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+        });
     }
 
     public void unsubscribe(String email) {
