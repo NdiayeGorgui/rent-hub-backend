@@ -1,9 +1,6 @@
 package com.smartiadev.rental_service.service.impl;
 
-import com.smartiadev.base_domain_service.dto.RentalApprovedEvent;
-import com.smartiadev.base_domain_service.dto.RentalCancelledByUserEvent;
-import com.smartiadev.base_domain_service.dto.RentalCancelledEvent;
-import com.smartiadev.base_domain_service.dto.RentalStartedEvent;
+import com.smartiadev.base_domain_service.dto.*;
 import com.smartiadev.rental_service.client.ItemClient;
 import com.smartiadev.rental_service.client.ReviewClient;
 import com.smartiadev.rental_service.dto.*;
@@ -80,7 +77,19 @@ public class RentalServiceImpl implements RentalService {
                 .status(RentalStatus.CREATED)
                 .build();
 
-        return map(repository.save(rental));
+        Rental saved = repository.save(rental);
+
+        // 📡 Kafka notification propriétaire
+        eventProducer.sendRentalCreated(
+                new RentalCreatedEvent(
+                        saved.getId(),
+                        saved.getItemId(),
+                        saved.getOwnerId(),
+                        saved.getRenterId()
+                )
+        );
+
+        return map(saved);
     }
 
 

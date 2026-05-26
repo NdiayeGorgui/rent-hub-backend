@@ -27,6 +27,21 @@ public class RentalNotificationConsumer {
         );
     }
 
+    @KafkaListener(topics = "rental.created")
+    public void created(RentalCreatedEvent event) {
+
+        sendNotification(new Notification(
+                null,
+                event.ownerId(),
+                "Nouvelle demande de location reçue 📦",
+                "RENTAL_REQUEST",
+                false,
+                LocalDateTime.now()
+        ));
+
+        System.out.println("📩 Nouvelle demande de location");
+    }
+
     @KafkaListener(topics = "rental.approved")
     public void approved(RentalApprovedEvent event) {
 

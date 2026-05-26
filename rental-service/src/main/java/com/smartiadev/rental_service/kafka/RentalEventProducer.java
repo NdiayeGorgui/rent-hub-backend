@@ -13,6 +13,10 @@ public class RentalEventProducer {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    public void sendRentalCreated(RentalCreatedEvent event) {
+        kafkaTemplate.send("rental.created", event);
+    }
+
     public void sendRentalApproved(RentalApprovedEvent event) {
         kafkaTemplate.send("rental.approved", event);
     }
