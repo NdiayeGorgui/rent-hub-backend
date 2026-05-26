@@ -149,7 +149,7 @@ public class NewsletterService {
                 mail.setSubject(request.subject());
                 mail.setText(request.body() +
                         "\n\n---\nPour vous désabonner : " +
-                        "https://app.gonifty.ca/newsletter/unsubscribe?email=" + sub.getEmail()
+                        "https://app.gonifty.ca/news-letter/unsubscribe?email=" + sub.getEmail()
                 );
                 mailSender.send(mail);
             } catch (Exception e) {
