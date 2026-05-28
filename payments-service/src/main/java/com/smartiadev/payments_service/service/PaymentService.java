@@ -403,7 +403,10 @@ public class PaymentService {
                 payment.getStatus().name(),
                 payment.getCreatedAt(),
                 payment.getPaymentIntentId(),
-                null
+                null,
+                repository.existsByPaymentIntentIdAndType(
+                        payment.getPaymentIntentId(), PaymentType.AUCTION_REFUND
+                )
         );
     }
 

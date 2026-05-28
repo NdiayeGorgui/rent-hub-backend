@@ -71,5 +71,11 @@ public interface PaymentRepository
             PaymentStatus status,
             LocalDateTime deadline
     );
+
+    // PaymentRepository.java
+    boolean existsByOriginalPaymentIntentIdAndType(
+            String originalPaymentIntentId,
+            PaymentType type
+    );
 }
 

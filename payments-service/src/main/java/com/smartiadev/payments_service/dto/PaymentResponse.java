@@ -15,5 +15,6 @@ public record PaymentResponse(
         String status,
         LocalDateTime createdAt,
         String paymentIntentId,
-        String clientSecret
+        String clientSecret,
+        boolean alreadyRefunded
 ) {}
