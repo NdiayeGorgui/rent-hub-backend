@@ -290,6 +290,58 @@ public class PaymentService {
 
     }
 
+    // Dans PaymentService.java
+    @Transactional
+    public void refundSimple(String paymentIntentId) throws StripeException {
+
+        Payment payment = repository
+                .findByPaymentIntentId(paymentIntentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
+
+        if (payment.getStatus() != PaymentStatus.SUCCESS) {
+            throw new IllegalStateException("Payment not successful");
+        }
+
+        boolean alreadyRefunded = repository.existsByPaymentIntentIdAndType(
+                paymentIntentId, PaymentType.AUCTION_REFUND);
+        if (alreadyRefunded) {
+            throw new IllegalStateException("Already refunded");
+        }
+
+        // ← Stripe rembourse
+        RefundCreateParams params = RefundCreateParams.builder()
+                .setPaymentIntent(paymentIntentId)
+                .setAmount((long) (payment.getAmount() * 100))
+                .build();
+
+        Refund refund = Refund.create(params);
+
+        if (!"succeeded".equals(refund.getStatus())) {
+            throw new IllegalStateException("Refund failed on Stripe");
+        }
+
+        // ← Enregistre le remboursement
+        repository.save(Payment.builder()
+                .userId(payment.getUserId())
+                .itemId(payment.getItemId())
+                .auctionId(payment.getAuctionId())
+                .amount(payment.getAmount())
+                .type(PaymentType.AUCTION_REFUND)
+                .status(PaymentStatus.SUCCESS)
+                .paymentIntentId(refund.getId())
+                .createdAt(LocalDateTime.now())
+                .build());
+
+        // ← Notifie l'utilisateur via Kafka
+        paymentEventPublisher.publishAuctionRefunded(
+                new AuctionFeeRefundedEvent(
+                        payment.getItemId(),
+                        payment.getUserId(),
+                        payment.getAmount()
+                )
+        );
+    }
+
     // Dans PaymentService
     @Transactional
     public PaymentIntentResponse createPenaltyPayment(UUID userId) throws StripeException {
