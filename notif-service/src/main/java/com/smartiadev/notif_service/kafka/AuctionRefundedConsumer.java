@@ -30,7 +30,7 @@ public class AuctionRefundedConsumer {
                 new Notification(
                         null,
                         event.ownerId(),
-                        "💸 Votre paiement de " +event.amount()+"$"+"pour la création de l'enchére a été remboursé.",
+                        "💸 Votre paiement de " +event.amount()+"$"+" pour la création de l'enchére a été remboursé.",
                         "AUCTION_REFUNDED",
                         false,
                         LocalDateTime.now()

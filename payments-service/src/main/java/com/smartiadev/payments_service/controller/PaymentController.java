@@ -114,7 +114,7 @@ public class PaymentController {
             @RequestParam UUID winnerId,
             @RequestParam Long auctionId
     ) throws StripeException {
-        service.refundSimple(paymentIntentId);
+        service.refundAuctionFee(paymentIntentId, winnerId, auctionId);
     }
 
     // Dans PaymentController.java
@@ -125,6 +125,7 @@ public class PaymentController {
         service.refundSimple(paymentIntentId);
         return ResponseEntity.ok().build();
     }
+
 
     // Dans PaymentController
     @PostMapping("/penalty/pay")
