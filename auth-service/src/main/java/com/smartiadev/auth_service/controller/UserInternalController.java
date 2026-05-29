@@ -21,12 +21,28 @@ import java.util.UUID;
 public class UserInternalController {
 
     private final AuthService userService;
+    private final UserRepository userRepository;
 
     @GetMapping("/internal/{id}")
     public UserResponse getUser(@PathVariable UUID id) {
         return userService.getUser(id);
     }
 
+    @PostMapping("/internal/batch")
+    public List<UserResponse> getUsersBatch(
+            @RequestBody List<UUID> ids
+    ) {
+        return userRepository.findAllById(ids)
+                .stream()
+                .map(user -> new UserResponse(
+                        user.getId(),
+                        user.getFullName(),
+                        user.getEmail(),
+                        user.getUsername(),
+                        user.getRoles()
+                ))
+                .toList();
+    }
 
 
     @GetMapping("/internal/{id}/can-bid")

@@ -8,7 +8,10 @@ public record DisputeDto(
         Long auctionId,
         Long itemId,
         UUID openedBy,
+        String openedUsername,
         UUID reportedUserId,
+        String reportedUsername,
+        String itemTitle,
         String reason,
         String status,
         String adminDecision

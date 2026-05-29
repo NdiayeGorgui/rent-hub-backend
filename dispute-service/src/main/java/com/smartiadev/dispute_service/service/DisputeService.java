@@ -4,10 +4,7 @@ import com.smartiadev.base_domain_service.dto.DisputeCreatedEvent;
 import com.smartiadev.base_domain_service.dto.ItemDeactivatedEvent;
 import com.smartiadev.base_domain_service.dto.UserSuspendedEvent;
 import com.smartiadev.dispute_service.client.*;
-import com.smartiadev.dispute_service.dto.CreateDisputeRequest;
-import com.smartiadev.dispute_service.dto.DisputeDto;
-import com.smartiadev.dispute_service.dto.PaymentResponse;
-import com.smartiadev.dispute_service.dto.ResolveDisputeRequest;
+import com.smartiadev.dispute_service.dto.*;
 import com.smartiadev.dispute_service.entity.Dispute;
 import com.smartiadev.dispute_service.entity.DisputeStatus;
 import com.smartiadev.dispute_service.kafka.DisputeEventProducer;
@@ -17,8 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -114,16 +114,18 @@ public class DisputeService {
         Dispute saved = repository.save(dispute);
 
         var admins = authClient.getAdmins();
+
         if (admins == null || admins.isEmpty()) {
             throw new IllegalStateException("No admin available");
         }
+
         UUID adminId = admins.get(0).id();
 
         eventProducer.disputeCreated(
                 new DisputeCreatedEvent(
                         saved.getId(),
                         saved.getRentalId(),
-                        saved.getAuctionId(),   // ← nouveau
+                        saved.getAuctionId(),
                         saved.getItemId(),
                         adminId,
                         saved.getOpenedBy(),
@@ -132,21 +134,129 @@ public class DisputeService {
                 )
         );
 
-        return map(saved);
+// ── BATCH DATA ─────────────────────────────
+
+        List<ItemInternalDTO> items =
+                itemClient.getItemsBatch(
+                        List.of(saved.getItemId())
+                );
+
+        List<UUID> userIds = new ArrayList<>();
+
+        userIds.add(saved.getOpenedBy());
+
+        if (saved.getReportedUserId() != null) {
+            userIds.add(saved.getReportedUserId());
+        }
+
+        List<UserResponse> users =
+                authClient.getUsersBatch(userIds);
+
+        Map<Long, ItemInternalDTO> itemMap =
+                items.stream()
+                        .collect(Collectors.toMap(
+                                ItemInternalDTO::id,
+                                i -> i
+                        ));
+
+        Map<UUID, UserResponse> userMap =
+                users.stream()
+                        .collect(Collectors.toMap(
+                                UserResponse::id,
+                                u -> u
+                        ));
+
+        return map(saved, itemMap, userMap);
+
     }
 
-    public List<DisputeDto> myDisputes(UUID userId) {
-        return repository.findByOpenedBy(userId)
-                .stream()
-                .map(this::map)
+    public List myDisputes(UUID userId) {
+
+        List<Dispute> disputes =
+                repository.findByOpenedBy(userId);
+
+        List<Long> itemIds = disputes.stream()
+                .map(Dispute::getItemId)
+                .distinct()
                 .toList();
+
+        List<UUID> userIds = disputes.stream()
+                .flatMap(d -> java.util.stream.Stream.of(
+                        d.getOpenedBy(),
+                        d.getReportedUserId()
+                ))
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+
+        List<ItemInternalDTO> items =
+                itemClient.getItemsBatch(itemIds);
+
+        List<UserResponse> users =
+                authClient.getUsersBatch(userIds);
+
+        Map<Long, ItemInternalDTO> itemMap =
+                items.stream()
+                        .collect(Collectors.toMap(
+                                ItemInternalDTO::id,
+                                i -> i
+                        ));
+
+        Map<UUID, UserResponse> userMap =
+                users.stream()
+                        .collect(Collectors.toMap(
+                                UserResponse::id,
+                                u -> u
+                        ));
+
+        return disputes.stream()
+                .map(d -> map(d, itemMap, userMap))
+                .toList();
+
     }
 
-    public List<DisputeDto> all() {
-        return repository.findAll()
-                .stream()
-                .map(this::map)
+    public List all() {
+
+        List<Dispute> disputes = repository.findAll();
+
+        List<Long> itemIds = disputes.stream()
+                .map(Dispute::getItemId)
+                .distinct()
                 .toList();
+
+        List<UUID> userIds = disputes.stream()
+                .flatMap(d -> java.util.stream.Stream.of(
+                        d.getOpenedBy(),
+                        d.getReportedUserId()
+                ))
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+
+        List<ItemInternalDTO> items =
+                itemClient.getItemsBatch(itemIds);
+
+        List<UserResponse> users =
+                authClient.getUsersBatch(userIds);
+
+        Map<Long, ItemInternalDTO> itemMap =
+                items.stream()
+                        .collect(Collectors.toMap(
+                                ItemInternalDTO::id,
+                                i -> i
+                        ));
+
+        Map<UUID, UserResponse> userMap =
+                users.stream()
+                        .collect(Collectors.toMap(
+                                UserResponse::id,
+                                u -> u
+                        ));
+
+        return disputes.stream()
+                .map(d -> map(d, itemMap, userMap))
+                .toList();
+
     }
 
     @Transactional
@@ -206,14 +316,40 @@ public class DisputeService {
         repository.save(dispute);
     }
 
-    private DisputeDto map(Dispute d) {
+    private DisputeDto map(
+            Dispute d,
+            Map<Long, ItemInternalDTO> itemMap,
+            Map<UUID, UserResponse> userMap
+    ) {
+
+        var item = itemMap.get(d.getItemId());
+
+        var openedUser = userMap.get(d.getOpenedBy());
+
+        var reportedUser = d.getReportedUserId() != null
+                ? userMap.get(d.getReportedUserId())
+                : null;
+
         return new DisputeDto(
                 d.getId(),
                 d.getRentalId(),
                 d.getAuctionId(),
                 d.getItemId(),
+
                 d.getOpenedBy(),
+                openedUser != null
+                        ? openedUser.username()
+                        : null,
+
                 d.getReportedUserId(),
+                reportedUser != null
+                        ? reportedUser.username()
+                        : null,
+
+                item != null
+                        ? item.title()
+                        : null,
+
                 d.getReason(),
                 d.getStatus().name(),
                 d.getAdminDecision()

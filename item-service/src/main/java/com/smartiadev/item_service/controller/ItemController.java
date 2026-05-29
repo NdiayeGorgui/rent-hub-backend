@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartiadev.item_service.entity.Item;
 import com.smartiadev.item_service.entity.ItemType;
 import com.smartiadev.item_service.exception.ItemNotFoundException;
+import com.smartiadev.item_service.repository.ItemRepository;
 import com.smartiadev.item_service.service.ItemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -41,6 +42,7 @@ public class ItemController {
     private final ItemService service;
 
     private final ObjectMapper objectMapper;
+    private final ItemRepository itemRepository;
 
     /* =====================
        CREATE ITEM (JWT)
@@ -191,6 +193,25 @@ public class ItemController {
                 pricePerDay
         );
     }
+
+    @PostMapping("/internal/batch")
+    public List<ItemInternalDTO> getItemsBatch(
+            @RequestBody List<Long> ids
+    ) {
+        return itemRepository.findAllById(ids)
+                .stream()
+                .map(item -> new ItemInternalDTO(
+                        item.getId(),
+                        item.getTitle(),
+                        item.getOwnerId(),
+                        item.getActive(),
+                        item.getType().name(),
+                        item.getStatus(),
+                        item.getPricePerDay()
+                ))
+                .toList();
+    }
+
 
     /**
      * Recherche d'articles disponibles avec filtres + tri
