@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -299,20 +301,50 @@ public class RentalServiceImpl implements RentalService {
     @Override
     public List<ItemSummaryDto> getRentedItems(UUID userId) {
 
-        return repository.findByRenterId(userId).stream()
+        List<Rental> rentals = repository.findByRenterId(userId);
+
+        // ─────────────────────────────────────────
+        // Batch item ids
+        // ─────────────────────────────────────────
+
+        List<Long> itemIds = rentals.stream()
+                .map(Rental::getItemId)
+                .distinct()
+                .toList();
+
+        // ─────────────────────────────────────────
+        // Batch items
+        // ─────────────────────────────────────────
+
+        List<ItemInternalDTO> items =
+                itemClient.getItemsBatch(itemIds);
+
+        Map<Long, ItemInternalDTO> itemMap =
+                items.stream()
+                        .collect(Collectors.toMap(
+                                ItemInternalDTO::id,
+                                i -> i
+                        ));
+
+        // ─────────────────────────────────────────
+        // DTO mapping
+        // ─────────────────────────────────────────
+
+        return rentals.stream()
                 .map(rental -> {
 
-                    ItemInternalDTO item;
-                    try {
-                        item = itemClient.getItem(rental.getItemId());
-                    } catch (Exception e) {
-                        // ⚠️ item supprimé / inaccessible
+                    ItemInternalDTO item =
+                            itemMap.get(rental.getItemId());
+
+                    if (item == null) {
                         return null;
                     }
 
                     Double rating;
+
                     try {
-                        rating = reviewClient.getAverageRatingForItem(item.id());
+                        rating = reviewClient
+                                .getAverageRatingForItem(item.id());
                     } catch (Exception e) {
                         rating = 0.0;
                     }
@@ -327,7 +359,7 @@ public class RentalServiceImpl implements RentalService {
                             rental.getEndDate()
                     );
                 })
-                .filter(Objects::nonNull) // ⬅️ TRÈS IMPORTANT
+                .filter(Objects::nonNull)
                 .toList();
     }
 

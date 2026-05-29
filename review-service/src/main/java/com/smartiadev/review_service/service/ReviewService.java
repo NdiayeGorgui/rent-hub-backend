@@ -122,10 +122,17 @@ public class ReviewService {
 
         ItemInternalDTO item = itemClient.getItemById(itemId);
 
-        return reviewRepository
-                .findByItemIdAndReviewerIdNot(itemId, item.ownerId())
-                .stream()
-                .map(this::mapToDto)
+        List<Review> reviews =
+                reviewRepository.findByItemIdAndReviewerIdNot(
+                        itemId,
+                        item.ownerId()
+                );
+
+        Map<UUID, UserProfileInternalDto> userMap =
+                loadUsersMap(reviews);
+
+        return reviews.stream()
+                .map(r -> mapToDto(r, userMap))
                 .toList();
     }
 
@@ -136,10 +143,17 @@ public class ReviewService {
                 .toList();
     }*/
    public List<ReviewDto> getReviewsByUser(UUID userId) {
-       return reviewRepository
-               .findByReviewedUserIdAndType(userId, ReviewType.USER) // ← ajoute le filtre type
-               .stream()
-               .map(this::mapToDto)
+       List<Review> reviews =
+               reviewRepository.findByReviewedUserIdAndType(
+                       userId,
+                       ReviewType.USER
+               );
+
+       Map<UUID, UserProfileInternalDto> userMap =
+               loadUsersMap(reviews);
+
+       return reviews.stream()
+               .map(r -> mapToDto(r, userMap))
                .toList();
    }
 
@@ -196,34 +210,59 @@ public class ReviewService {
        MAPPING
        ========================= */
 
-    private ReviewDto mapToDto(Review review) {
 
-        String username = "Unknown";
+    // Tous les avis reçus par un user (sans filtre de type)
+    public List<ReviewDto> getAllReviewsForUser(UUID userId) {
+        List<Review> reviews =
+                reviewRepository.findByReviewedUserId(userId);
 
-        try {
-            UserProfileInternalDto user = authClient.getUserById(review.getReviewerId());
-            username = user.getUsername();
-        } catch (Exception e) {
-            System.out.println("Auth service unavailable");
-        }
+        Map<UUID, UserProfileInternalDto> userMap =
+                loadUsersMap(reviews);
+
+        return reviews.stream()
+                .map(r -> mapToDto(r, userMap))
+                .toList();
+    }
+
+    private Map<UUID, UserProfileInternalDto> loadUsersMap(
+            List<Review> reviews
+    ) {
+
+        List<UUID> userIds = reviews.stream()
+                .map(Review::getReviewerId)
+                .distinct()
+                .toList();
+
+        List<UserProfileInternalDto> users =
+                authClient.getUsersBatch(userIds);
+
+        return users.stream()
+                .collect(Collectors.toMap(
+                        UserProfileInternalDto::getUserId,
+                        u -> u
+                ));
+    }
+
+
+    private ReviewDto mapToDto(
+            Review review,
+            Map<UUID, UserProfileInternalDto> userMap
+    ) {
+
+        UserProfileInternalDto user =
+                userMap.get(review.getReviewerId());
 
         return new ReviewDto(
                 review.getId(),
                 review.getItemId(),
                 review.getReviewerId(),
                 review.getReviewedUserId(),
-                username,
+                user != null
+                        ? user.getUsername()
+                        : "Unknown",
                 review.getRating(),
                 review.getComment()
         );
-    }
-
-    // Tous les avis reçus par un user (sans filtre de type)
-    public List<ReviewDto> getAllReviewsForUser(UUID userId) {
-        return reviewRepository.findByReviewedUserId(userId)
-                .stream()
-                .map(this::mapToDto)
-                .toList();
     }
 
 }

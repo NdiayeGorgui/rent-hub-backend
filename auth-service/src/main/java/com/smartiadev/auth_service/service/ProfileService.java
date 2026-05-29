@@ -6,6 +6,7 @@ import com.smartiadev.auth_service.client.ReviewClient;
 import com.smartiadev.auth_service.client.SubscriptionClient;
 import com.smartiadev.auth_service.dto.ItemSummaryDto;
 import com.smartiadev.auth_service.dto.UserProfileDto;
+import com.smartiadev.auth_service.dto.UserProfileInternalDto;
 import com.smartiadev.auth_service.entity.User;
 import com.smartiadev.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -92,5 +93,30 @@ public class ProfileService {
         if (rating >= 4.0) return "VERY_GOOD";
         if (rating >= 3.0) return "GOOD";
         return "AVERAGE";
+    }
+
+    public List<UserProfileInternalDto> getUsersBatch(List<UUID> ids) {
+
+        return userRepository.findAllById(ids)
+                .stream()
+                .map(this::mapInternal)
+                .toList();
+    }
+
+    private UserProfileInternalDto mapInternal(User user) {
+
+        UserProfileInternalDto dto = new UserProfileInternalDto();
+
+        dto.setUserId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setFullName(user.getFullName());
+        dto.setCity(user.getCity());
+
+        // fallback
+        dto.setAverageRating(0.0);
+        dto.setReviewsCount(0L);
+        dto.setBadge("NEW");
+
+        return dto;
     }
 }

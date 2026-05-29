@@ -768,6 +768,28 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<ItemInternalDTO> getItemsBatch(List<Long> ids) {
+
+        return repository.findAllById(ids)
+                .stream()
+                .map(this::mapInternal)
+                .toList();
+    }
+
+    private ItemInternalDTO mapInternal(Item item) {
+
+        return new ItemInternalDTO(
+                item.getId(),
+                item.getTitle(),
+                item.getOwnerId(),
+                item.getActive(),
+                item.getType().name(),
+                item.getStatus(),
+                item.getPricePerDay()
+        );
+    }
+
     private double calculateDistance(double lat1, double lng1, double lat2, double lng2) {
         final int R = 6371; // rayon de la Terre en km
         double dLat = Math.toRadians(lat2 - lat1);

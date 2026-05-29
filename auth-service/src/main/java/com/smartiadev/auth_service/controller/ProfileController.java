@@ -1,6 +1,7 @@
 package com.smartiadev.auth_service.controller;
 
 import com.smartiadev.auth_service.dto.UserProfileDto;
+import com.smartiadev.auth_service.dto.UserProfileInternalDto;
 import com.smartiadev.auth_service.service.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -62,8 +64,12 @@ public class ProfileController {
         return profileService.getPublicProfile(userId);
     }
 
-
-
+    @PostMapping("/internal/batch")
+    public List<UserProfileInternalDto> getUsersBatch(
+            @RequestBody List<UUID> ids
+    ) {
+        return profileService.getUsersBatch(ids);
+    }
 }
 
 

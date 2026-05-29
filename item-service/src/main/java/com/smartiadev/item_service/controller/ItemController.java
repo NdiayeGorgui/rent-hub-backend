@@ -212,6 +212,11 @@ public class ItemController {
                 .toList();
     }
 
+    @PostMapping("/internal/items/batch")
+    public List<ItemInternalDTO> getItemsBatchRentals(@RequestBody List<Long> ids) {
+        return service.getItemsBatch(ids);
+    }
+
 
     /**
      * Recherche d'articles disponibles avec filtres + tri

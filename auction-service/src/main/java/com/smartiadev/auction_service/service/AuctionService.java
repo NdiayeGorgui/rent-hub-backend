@@ -20,8 +20,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.apache.kafka.common.requests.DeleteAclsResponse.log;
 
@@ -165,12 +167,17 @@ public class AuctionService {
     }
 
     public List<AuctionDto> getOpenAuctions() {
-        return auctionRepository.findByStatus(AuctionStatus.OPEN)
-                .stream()
-                .map(this::map)
+
+        List<Auction> auctions =
+                auctionRepository.findByStatus(AuctionStatus.OPEN);
+
+        Map<Long, ItemInternalDTO> itemMap =
+                loadItemsMap(auctions);
+
+        return auctions.stream()
+                .map(a -> map(a, itemMap))
                 .toList();
     }
-
     private AuctionDto map(Auction a) {
         Integer participants = bidRepository.countParticipants(a.getId());
 
@@ -192,6 +199,51 @@ public class AuctionService {
                 a.getStatus().name(),
                 reserveReached
         );
+    }
+
+    private AuctionDto map(
+            Auction a,
+            Map<Long, ItemInternalDTO> itemMap
+    ) {
+
+        Integer participants =
+                bidRepository.countParticipants(a.getId());
+
+        boolean reserveReached =
+                a.getReservePrice() == null ||
+                        a.getCurrentPrice() >= a.getReservePrice();
+
+        return new AuctionDto(
+                a.getId(),
+                a.getItemId(),
+                a.getOwnerId(),
+                a.getWinnerId(),
+                a.getStartPrice(),
+                a.getCurrentPrice(),
+                participants,
+                a.getViews(),
+                a.getWatchers(),
+                a.getEndDate(),
+                a.getStatus().name(),
+                reserveReached
+        );
+    }
+
+    private Map<Long, ItemInternalDTO> loadItemsMap(List<Auction> auctions) {
+
+        List<Long> itemIds = auctions.stream()
+                .map(Auction::getItemId)
+                .distinct()
+                .toList();
+
+        List<ItemInternalDTO> items =
+                itemClient.getItemsBatch(itemIds);
+
+        return items.stream()
+                .collect(Collectors.toMap(
+                        ItemInternalDTO::id,
+                        i -> i
+                ));
     }
 
     @Transactional
@@ -367,35 +419,66 @@ public class AuctionService {
 
     public List<AuctionDto> getWonAuctions(UUID userId) {
         // CLOSED = enchère terminée, winnerId = userId
-        return auctionRepository.findByWinnerIdAndStatus(userId, AuctionStatus.CLOSED)
-                .stream()
-                .map(this::map)
+        List<Auction> auctions =
+                auctionRepository.findByWinnerIdAndStatus(
+                        userId,
+                        AuctionStatus.CLOSED
+                );
+
+        Map<Long, ItemInternalDTO> itemMap =
+                loadItemsMap(auctions);
+
+        return auctions.stream()
+                .map(a -> map(a, itemMap))
                 .toList();
     }
 
     public List<AuctionDto> getClosedAuctionsAsOwner(UUID ownerId) {
-        return auctionRepository.findByOwnerIdAndStatusAndWinnerIdIsNotNull(
-                        ownerId, AuctionStatus.CLOSED)
-                .stream()
-                .map(this::map)
+        List<Auction> auctions =
+                auctionRepository.findByOwnerIdAndStatusAndWinnerIdIsNotNull(
+                        ownerId,
+                        AuctionStatus.CLOSED
+                );
+
+        Map<Long, ItemInternalDTO> itemMap =
+                loadItemsMap(auctions);
+
+        return auctions.stream()
+                .map(a -> map(a, itemMap))
                 .toList();
     }
 
     // Enchères que j'ai lancées (owner)
     public List<AuctionDto> getMyAuctions(UUID ownerId) {
-        return auctionRepository.findByOwnerId(ownerId)
-                .stream()
-                .map(this::map)
+
+        List<Auction> auctions =
+                auctionRepository.findByOwnerId(ownerId);
+
+        Map<Long, ItemInternalDTO> itemMap =
+                loadItemsMap(auctions);
+
+        return auctions.stream()
+                .map(a -> map(a, itemMap))
                 .toList();
     }
 
     // Enchères où j'ai participé (bidder)
     public List<AuctionDto> getAuctionsIParticipateIn(UUID userId) {
-        return bidRepository.findDistinctAuctionIdsByBidderId(userId)
-                .stream()
-                .map(auctionId -> auctionRepository.findById(auctionId).orElse(null))
-                .filter(a -> a != null)
-                .map(this::map)
+
+        List<Auction> auctions =
+                bidRepository.findDistinctAuctionIdsByBidderId(userId)
+                        .stream()
+                        .map(auctionId ->
+                                auctionRepository.findById(auctionId).orElse(null)
+                        )
+                        .filter(a -> a != null)
+                        .toList();
+
+        Map<Long, ItemInternalDTO> itemMap =
+                loadItemsMap(auctions);
+
+        return auctions.stream()
+                .map(a -> map(a, itemMap))
                 .toList();
     }
     @Transactional(readOnly = true)
