@@ -396,6 +396,7 @@ public class PaymentService {
         return new PaymentResponse(
                 payment.getId(),
                 payment.getItemId(),
+                payment.getAuctionId(),
                 payment.getUserId(),
                 fullName,
                 payment.getAmount(),

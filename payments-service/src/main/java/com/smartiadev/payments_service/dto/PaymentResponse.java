@@ -8,6 +8,7 @@ import java.util.UUID;
 public record PaymentResponse(
         Long id,
         Long itemId,
+        Long auctionId,
         UUID userId,         // ✅ AJOUT
         String userFullName,
         Double amount,
