@@ -103,6 +103,57 @@ public class ProfileService {
                 .toList();
     }
 
+    public List<UserProfileInternalDto> getUserBatch(
+            List<UUID> ids
+    ) {
+
+        return userRepository.findAllById(ids)
+                .stream()
+                .map(user -> {
+
+                    Double rating = 0.0;
+                    Long reviewsCount = 0L;
+
+                    try {
+                        rating = reviewClient
+                                .getAverageRatingForUser(user.getId());
+                    } catch (Exception ignored) {
+                    }
+
+                    try {
+                        reviewsCount = reviewClient
+                                .getReviewsCountForUser(user.getId());
+                    } catch (Exception ignored) {
+                    }
+
+                    String badge = computeBadge(
+                            rating != null ? rating : 0.0,
+                            reviewsCount != null ? reviewsCount : 0L
+                    );
+
+                    UserProfileInternalDto dto =
+                            new UserProfileInternalDto();
+
+                    dto.setUserId(user.getId());
+                    dto.setUsername(user.getUsername());
+                    dto.setFullName(user.getFullName());
+                    dto.setCity(user.getCity());
+
+                    dto.setAverageRating(
+                            rating != null ? rating : 0.0
+                    );
+
+                    dto.setReviewsCount(
+                            reviewsCount != null ? reviewsCount : 0L
+                    );
+
+                    dto.setBadge(badge);
+
+                    return dto;
+                })
+                .toList();
+    }
+
     private UserProfileInternalDto mapInternal(User user) {
 
         UserProfileInternalDto dto = new UserProfileInternalDto();

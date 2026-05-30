@@ -31,8 +31,5 @@ public class UserProfileDto {
     private List<ItemSummaryDto> rentedItems;
     private List<String> roles;
 
-    // PRIVÉ (plus tard)
-    // private String email;
-    // private String phone;
 }
 

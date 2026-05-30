@@ -3,11 +3,13 @@ package com.smartiadev.auth_service.controller;
 
 import com.smartiadev.auth_service.dto.AuctionStrikeResponse;
 import com.smartiadev.auth_service.dto.UserBidEligibilityResponse;
+import com.smartiadev.auth_service.dto.UserProfileInternalDto;
 import com.smartiadev.auth_service.dto.UserResponse;
 
 import com.smartiadev.auth_service.entity.User;
 import com.smartiadev.auth_service.repository.UserRepository;
 import com.smartiadev.auth_service.service.AuthService;
+import com.smartiadev.auth_service.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class UserInternalController {
 
     private final AuthService userService;
+    private final ProfileService profileService;
     private final UserRepository userRepository;
 
     @GetMapping("/internal/{id}")
@@ -42,6 +45,13 @@ public class UserInternalController {
                         user.getRoles()
                 ))
                 .toList();
+    }
+
+    @PostMapping("/api/users/internal/user/batch")
+    public List<UserProfileInternalDto> getUserBatch(
+            @RequestBody List<UUID> ids
+    ) {
+        return profileService.getUserBatch(ids);
     }
 
 

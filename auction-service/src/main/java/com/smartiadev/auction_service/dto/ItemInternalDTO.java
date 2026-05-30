@@ -4,6 +4,7 @@ package com.smartiadev.auction_service.dto;
 import com.smartiadev.auction_service.entity.ItemStatus;
 import com.smartiadev.auction_service.entity.ItemType;
 
+import java.util.List;
 import java.util.UUID;
 
 public record ItemInternalDTO(
@@ -12,5 +13,9 @@ public record ItemInternalDTO(
         Boolean active,
         ItemType type ,
         ItemStatus status,
-        Double pricePerDay
+        Double pricePerDay,
+        // 🔥 AJOUTS
+        String title,
+
+        List<String> imageUrls
 ) {}

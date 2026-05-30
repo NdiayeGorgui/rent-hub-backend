@@ -19,10 +19,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.apache.kafka.common.requests.DeleteAclsResponse.log;
@@ -169,41 +166,55 @@ public class AuctionService {
     public List<AuctionDto> getOpenAuctions() {
 
         List<Auction> auctions =
-                auctionRepository.findByStatus(AuctionStatus.OPEN);
+                auctionRepository.findByStatus(
+                        AuctionStatus.OPEN
+                );
 
         Map<Long, ItemInternalDTO> itemMap =
                 loadItemsMap(auctions);
 
+        Map<UUID, UserProfileInternalDto> usersMap =
+                loadUsersMap(auctions);
+
         return auctions.stream()
-                .map(a -> map(a, itemMap))
+                .map(a -> map(a, itemMap, usersMap))
                 .toList();
     }
+
     private AuctionDto map(Auction a) {
-        Integer participants = bidRepository.countParticipants(a.getId());
 
-        boolean reserveReached =
-                a.getReservePrice() == null ||
-                        a.getCurrentPrice() >= a.getReservePrice();
+        Map<Long, ItemInternalDTO> itemsMap =
+                itemClient.getItemsBatch(List.of(a.getItemId()))
+                        .stream()
+                        .collect(Collectors.toMap(
+                                ItemInternalDTO::id,
+                                i -> i
+                        ));
 
-        return new AuctionDto(
-                a.getId(),
-                a.getItemId(),
-                a.getOwnerId(),
-                a.getWinnerId(),
-                a.getStartPrice(),
-                a.getCurrentPrice(),
-                participants,
-                a.getViews(),
-                a.getWatchers(),
-                a.getEndDate(),
-                a.getStatus().name(),
-                reserveReached
-        );
+        List<UUID> userIds = new ArrayList<>();
+
+        userIds.add(a.getOwnerId());
+
+        if (a.getWinnerId() != null) {
+            userIds.add(a.getWinnerId());
+        }
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                authClient.getUsersBatch(userIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserProfileInternalDto::getUserId,
+                                u -> u
+                        ));
+
+        return map(a, itemsMap, usersMap);
     }
+
 
     private AuctionDto map(
             Auction a,
-            Map<Long, ItemInternalDTO> itemMap
+            Map<Long, ItemInternalDTO> itemMap,
+            Map<UUID, UserProfileInternalDto> usersMap
     ) {
 
         Integer participants =
@@ -213,6 +224,17 @@ public class AuctionService {
                 a.getReservePrice() == null ||
                         a.getCurrentPrice() >= a.getReservePrice();
 
+        ItemInternalDTO item =
+                itemMap.get(a.getItemId());
+
+        UserProfileInternalDto owner =
+                usersMap.get(a.getOwnerId());
+
+        UserProfileInternalDto winner =
+                a.getWinnerId() != null
+                        ? usersMap.get(a.getWinnerId())
+                        : null;
+
         return new AuctionDto(
                 a.getId(),
                 a.getItemId(),
@@ -225,7 +247,15 @@ public class AuctionService {
                 a.getWatchers(),
                 a.getEndDate(),
                 a.getStatus().name(),
-                reserveReached
+                reserveReached,
+
+                // 🔥 ITEM
+                item != null ? item.title() : null,
+                item != null ? item.imageUrls() : List.of(),
+
+                // 🔥 USERS
+                owner != null ? owner.getUsername() : null,
+                winner != null ? winner.getUsername() : null
         );
     }
 
@@ -417,8 +447,41 @@ public class AuctionService {
                 .orElseThrow(() -> new RuntimeException("Auction not found")));
     }
 
+    private Map<UUID, UserProfileInternalDto> loadUsersMap(
+            List<Auction> auctions
+    ) {
+
+        List<UUID> userIds = auctions.stream()
+                .flatMap(a -> {
+
+                    if (a.getWinnerId() != null) {
+                        return List.of(
+                                a.getOwnerId(),
+                                a.getWinnerId()
+                        ).stream();
+                    }
+
+                    return List.of(
+                            a.getOwnerId()
+                    ).stream();
+                })
+                .distinct()
+                .toList();
+
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return authClient.getUsersBatch(userIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        UserProfileInternalDto::getUserId,
+                        u -> u
+                ));
+    }
+
     public List<AuctionDto> getWonAuctions(UUID userId) {
-        // CLOSED = enchère terminée, winnerId = userId
+
         List<Auction> auctions =
                 auctionRepository.findByWinnerIdAndStatus(
                         userId,
@@ -428,23 +491,31 @@ public class AuctionService {
         Map<Long, ItemInternalDTO> itemMap =
                 loadItemsMap(auctions);
 
+        Map<UUID, UserProfileInternalDto> usersMap =
+                loadUsersMap(auctions);
+
         return auctions.stream()
-                .map(a -> map(a, itemMap))
+                .map(a -> map(a, itemMap, usersMap))
                 .toList();
     }
 
     public List<AuctionDto> getClosedAuctionsAsOwner(UUID ownerId) {
+
         List<Auction> auctions =
-                auctionRepository.findByOwnerIdAndStatusAndWinnerIdIsNotNull(
-                        ownerId,
-                        AuctionStatus.CLOSED
-                );
+                auctionRepository
+                        .findByOwnerIdAndStatusAndWinnerIdIsNotNull(
+                                ownerId,
+                                AuctionStatus.CLOSED
+                        );
 
         Map<Long, ItemInternalDTO> itemMap =
                 loadItemsMap(auctions);
 
+        Map<UUID, UserProfileInternalDto> usersMap =
+                loadUsersMap(auctions);
+
         return auctions.stream()
-                .map(a -> map(a, itemMap))
+                .map(a -> map(a, itemMap, usersMap))
                 .toList();
     }
 
@@ -457,8 +528,11 @@ public class AuctionService {
         Map<Long, ItemInternalDTO> itemMap =
                 loadItemsMap(auctions);
 
+        Map<UUID, UserProfileInternalDto> usersMap =
+                loadUsersMap(auctions);
+
         return auctions.stream()
-                .map(a -> map(a, itemMap))
+                .map(a -> map(a, itemMap, usersMap))
                 .toList();
     }
 
@@ -469,18 +543,23 @@ public class AuctionService {
                 bidRepository.findDistinctAuctionIdsByBidderId(userId)
                         .stream()
                         .map(auctionId ->
-                                auctionRepository.findById(auctionId).orElse(null)
+                                auctionRepository.findById(auctionId)
+                                        .orElse(null)
                         )
-                        .filter(a -> a != null)
+                        .filter(Objects::nonNull)
                         .toList();
 
         Map<Long, ItemInternalDTO> itemMap =
                 loadItemsMap(auctions);
 
+        Map<UUID, UserProfileInternalDto> usersMap =
+                loadUsersMap(auctions);
+
         return auctions.stream()
-                .map(a -> map(a, itemMap))
+                .map(a -> map(a, itemMap, usersMap))
                 .toList();
     }
+
     @Transactional(readOnly = true)
     public AuctionDto getAuctionByItemId(Long itemId) {
 

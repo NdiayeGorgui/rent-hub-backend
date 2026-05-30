@@ -1,6 +1,7 @@
 package com.smartiadev.auction_service.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record AuctionDto(
@@ -15,6 +16,13 @@ public record AuctionDto(
         Integer watchers,
         LocalDateTime endDate,
         String status,
-        boolean reserveReached
+        boolean reserveReached,
+        // 🔥 ITEM
+        String itemTitle,
+        List<String> itemImages,
+
+        // 🔥 USERS
+        String ownerUsername,
+        String winnerUsername
 ) {}
 
