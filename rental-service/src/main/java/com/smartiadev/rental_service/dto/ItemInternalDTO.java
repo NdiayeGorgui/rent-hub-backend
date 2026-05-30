@@ -1,5 +1,6 @@
 package com.smartiadev.rental_service.dto;
 
+import java.util.List;
 import java.util.UUID;
 
 public record ItemInternalDTO(
@@ -7,6 +8,7 @@ public record ItemInternalDTO(
         String title,
         UUID ownerId,
         Double pricePerDay,
-        Boolean active
+        Boolean active,
+        List<String> imageUrls
 ) {}
 

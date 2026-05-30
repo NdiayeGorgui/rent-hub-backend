@@ -1,6 +1,7 @@
 package com.smartiadev.rental_service.service.impl;
 
 import com.smartiadev.base_domain_service.dto.*;
+import com.smartiadev.rental_service.client.AuthClient;
 import com.smartiadev.rental_service.client.ItemClient;
 import com.smartiadev.rental_service.client.ReviewClient;
 import com.smartiadev.rental_service.dto.*;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +34,7 @@ public class RentalServiceImpl implements RentalService {
     private final ItemClient itemClient;
     private final RentalEventProducer eventProducer;
     private final ReviewClient reviewClient;
+    private final AuthClient authClient;
 
     @Override
     public RentalResponseDTO create(RentalRequestDTO dto, UUID renterId) {
@@ -94,18 +97,69 @@ public class RentalServiceImpl implements RentalService {
         return map(saved);
     }
 
+    private RentalResponseDTO map(Rental rental) {
+
+        Map<Long, ItemInternalDTO> itemMap =
+                itemClient.getItemsBatch(
+                                List.of(rental.getItemId())
+                        )
+                        .stream()
+                        .collect(Collectors.toMap(
+                                ItemInternalDTO::id,
+                                i -> i
+                        ));
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                authClient.getUsersBatch(
+                                List.of(
+                                        rental.getOwnerId(),
+                                        rental.getRenterId()
+                                )
+                        )
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserProfileInternalDto::getUserId,
+                                u -> u
+                        ));
+
+        return map(
+                rental,
+                itemMap,
+                usersMap
+        );
+    }
 
     @Override
     public List<RentalResponseDTO> myRentals(UUID renterId) {
-        return repository.findByRenterId(renterId)
-                .stream().map(this::map).toList();
+        List<Rental> rentals =
+                repository.findByRenterId(renterId);
+
+        Map<Long, ItemInternalDTO> itemMap =
+                loadItemsMap(rentals);
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                loadUsersMap(rentals);
+
+        return rentals.stream()
+                .map(r -> map(r, itemMap, usersMap))
+                .toList();
     }
 
     @Override
     public List<RentalResponseDTO> rentalsForMyItems(UUID ownerId) {
         System.out.println("JWT OWNER = " + ownerId);
-        return repository.findByOwnerId(ownerId)
-                .stream().map(this::map).toList();
+        List<Rental> rentals =
+                repository.findByOwnerId(ownerId);
+
+        Map<Long, ItemInternalDTO> itemMap =
+                loadItemsMap(rentals);
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                loadUsersMap(rentals);
+
+        return rentals.stream()
+                .map(r -> map(r, itemMap, usersMap))
+                .toList();
     }
 
     @Override
@@ -140,19 +194,6 @@ public class RentalServiceImpl implements RentalService {
         );
     }
 
-    private RentalResponseDTO map(Rental r) {
-        return new RentalResponseDTO(
-                r.getId(),
-                r.getItemId(),
-                r.getOwnerId(),
-                r.getRenterId(),
-                r.getStartDate(),
-                r.getEndDate(),
-                r.getStatus().name(),
-                r.getTotalPrice(),
-                r.getCreatedAt()
-        );
-    }
 
     @Override
     @Transactional
@@ -255,19 +296,38 @@ public class RentalServiceImpl implements RentalService {
     }
     @Override
     public RentalResponseDTO getRentalById(Long id) {
-        Rental rental = repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Rental not found"));
 
-        return new RentalResponseDTO(
-                rental.getId(),
-                rental.getItemId(),
+        Rental rental = repository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Rental not found"));
+
+        Map<Long, ItemInternalDTO> itemMap =
+                itemClient.getItemsBatch(
+                                List.of(rental.getItemId())
+                        )
+                        .stream()
+                        .collect(Collectors.toMap(
+                                ItemInternalDTO::id,
+                                i -> i
+                        ));
+
+        List<UUID> userIds = List.of(
                 rental.getOwnerId(),
-                rental.getRenterId(),
-                rental.getStartDate(),
-                rental.getEndDate(),
-                rental.getStatus().name(),
-                rental.getTotalPrice(),
-                rental.getCreatedAt()
+                rental.getRenterId()
+        );
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                authClient.getUsersBatch(userIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserProfileInternalDto::getUserId,
+                                u -> u
+                        ));
+
+        return map(
+                rental,
+                itemMap,
+                usersMap
         );
     }
 @Override
@@ -381,4 +441,83 @@ public class RentalServiceImpl implements RentalService {
                 .totalDaysRented((long) Math.round(totalDays)) // ou Math.floor
                 .build();
     }
+
+    private Map<Long, ItemInternalDTO> loadItemsMap(
+            List<Rental> rentals
+    ) {
+
+        List<Long> itemIds =
+                rentals.stream()
+                        .map(Rental::getItemId)
+                        .distinct()
+                        .toList();
+
+        return itemClient.getItemsBatch(itemIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        ItemInternalDTO::id,
+                        i -> i
+                ));
+    }
+
+    private Map<UUID, UserProfileInternalDto> loadUsersMap(
+            List<Rental> rentals
+    ) {
+
+        List<UUID> userIds =
+                rentals.stream()
+                        .flatMap(r ->
+                                Stream.of(
+                                        r.getOwnerId(),
+                                        r.getRenterId()
+                                )
+                        )
+                        .distinct()
+                        .toList();
+
+        return authClient.getUsersBatch(userIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        UserProfileInternalDto::getUserId,
+                        u -> u
+                ));
+    }
+
+    private RentalResponseDTO map(
+            Rental rental,
+            Map<Long, ItemInternalDTO> itemMap,
+            Map<UUID, UserProfileInternalDto> usersMap
+    ) {
+
+        ItemInternalDTO item =
+                itemMap.get(rental.getItemId());
+
+        UserProfileInternalDto owner =
+                usersMap.get(rental.getOwnerId());
+
+        UserProfileInternalDto renter =
+                usersMap.get(rental.getRenterId());
+
+        return new RentalResponseDTO(
+                rental.getId(),
+                rental.getItemId(),
+
+                rental.getOwnerId(),
+                rental.getRenterId(),
+
+                rental.getStartDate(),
+                rental.getEndDate(),
+
+                rental.getStatus().name(),
+                rental.getTotalPrice(),
+                rental.getCreatedAt(),
+
+                item != null ? item.title() : null,
+                item != null ? item.imageUrls() : List.of(),
+
+                owner != null ? owner.getUsername() : null,
+                renter != null ? renter.getUsername() : null
+        );
+    }
+
 }

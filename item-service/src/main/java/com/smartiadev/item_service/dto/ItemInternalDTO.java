@@ -3,6 +3,7 @@ package com.smartiadev.item_service.dto;
 
 import com.smartiadev.item_service.entity.ItemStatus;
 
+import java.util.List;
 import java.util.UUID;
 
 public record ItemInternalDTO(
@@ -12,6 +13,7 @@ public record ItemInternalDTO(
         boolean active,
         String type,
         ItemStatus status,
-        Double pricePerDay
+        Double pricePerDay,
+        List<String> imageUrls
 ) {}
 

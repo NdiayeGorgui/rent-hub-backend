@@ -190,7 +190,8 @@ public class ItemController {
                 item.getActive(),
                 item.getType().name(),
                 item.getStatus(),
-                pricePerDay
+                pricePerDay,
+                item.getImageUrls()
         );
     }
 
@@ -207,7 +208,8 @@ public class ItemController {
                         item.getActive(),
                         item.getType().name(),
                         item.getStatus(),
-                        item.getPricePerDay()
+                        item.getPricePerDay(),
+                        item.getImageUrls()
                 ))
                 .toList();
     }

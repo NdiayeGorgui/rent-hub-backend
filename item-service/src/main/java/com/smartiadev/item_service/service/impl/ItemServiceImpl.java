@@ -786,7 +786,8 @@ public class ItemServiceImpl implements ItemService {
                 item.getActive(),
                 item.getType().name(),
                 item.getStatus(),
-                item.getPricePerDay()
+                item.getPricePerDay(),
+                item.getImageUrls()
         );
     }
 
