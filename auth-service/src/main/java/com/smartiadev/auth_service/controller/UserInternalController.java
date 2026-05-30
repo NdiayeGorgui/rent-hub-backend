@@ -47,7 +47,7 @@ public class UserInternalController {
                 .toList();
     }
 
-    @PostMapping("/api/users/internal/user/batch")
+    @PostMapping("/internal/user/batch")
     public List<UserProfileInternalDto> getUserBatch(
             @RequestBody List<UUID> ids
     ) {
