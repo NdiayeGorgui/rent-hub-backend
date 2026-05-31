@@ -7,7 +7,6 @@ import com.smartiadev.auth_service.client.SubscriptionClient;
 import com.smartiadev.auth_service.dto.ItemSummaryDto;
 import com.smartiadev.auth_service.dto.UserProfileDto;
 import com.smartiadev.auth_service.dto.UserProfileInternalDto;
-import com.smartiadev.auth_service.dto.UserReviewStatsDto;
 import com.smartiadev.auth_service.entity.User;
 import com.smartiadev.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +31,7 @@ public class ProfileService {
     /**
      * 👤 PROFIL PUBLIC
      */
-   // @Cacheable(value = "user-profile", key = "#userId")
+    // @Cacheable(value = "user-profile", key = "#userId")
     //@CacheEvict(value = "user-profile", allEntries = true)
     public UserProfileDto getPublicProfile(UUID userId) {
         User user = userRepository.findById(userId)
@@ -98,53 +95,11 @@ public class ProfileService {
         return "AVERAGE";
     }
 
-    public List<UserProfileInternalDto> getUsersBatch(
-            List<UUID> ids
-    ) {
+    public List<UserProfileInternalDto> getUsersBatch(List<UUID> ids) {
 
-        List<User> users = userRepository.findAllById(ids);
-
-        Map<UUID, UserReviewStatsDto> statsMap =
-                reviewClient.getUsersStats(ids)
-                        .stream()
-                        .collect(Collectors.toMap(
-                                UserReviewStatsDto::userId,
-                                s -> s
-                        ));
-
-        return users.stream()
-                .map(user -> {
-
-                    UserReviewStatsDto stats =
-                            statsMap.get(user.getId());
-
-                    Double rating =
-                            stats != null
-                                    ? stats.averageRating()
-                                    : 0.0;
-
-                    Long reviews =
-                            stats != null
-                                    ? stats.reviewsCount()
-                                    : 0L;
-
-                    UserProfileInternalDto dto =
-                            new UserProfileInternalDto();
-
-                    dto.setUserId(user.getId());
-                    dto.setUsername(user.getUsername());
-                    dto.setFullName(user.getFullName());
-                    dto.setCity(user.getCity());
-
-                    dto.setAverageRating(rating);
-                    dto.setReviewsCount(reviews);
-
-                    dto.setBadge(
-                            computeBadge(rating, reviews)
-                    );
-
-                    return dto;
-                })
+        return userRepository.findAllById(ids)
+                .stream()
+                .map(this::mapInternal)
                 .toList();
     }
 
@@ -215,6 +170,4 @@ public class ProfileService {
 
         return dto;
     }
-
-
 }

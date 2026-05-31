@@ -74,7 +74,7 @@ public class ReviewService {
             reviewedUserId = null;
         }
 
-     // ✅ Validation métier
+        // ✅ Validation métier
         if (type == ReviewType.USER && reviewedUserId == null) {
             throw new IllegalStateException("USER review must have reviewedUserId");
         }
@@ -137,41 +137,41 @@ public class ReviewService {
                 .toList();
     }
 
-   /* public List<ReviewDto> getReviewsByUser(UUID userId) {
-        return reviewRepository.findByReviewedUserId(userId)
-                .stream()
-                .map(this::mapToDto)
+    /* public List<ReviewDto> getReviewsByUser(UUID userId) {
+         return reviewRepository.findByReviewedUserId(userId)
+                 .stream()
+                 .map(this::mapToDto)
+                 .toList();
+     }*/
+    public List<ReviewDto> getReviewsByUser(UUID userId) {
+        List<Review> reviews =
+                reviewRepository.findByReviewedUserIdAndType(
+                        userId,
+                        ReviewType.USER
+                );
+
+        Map<UUID, UserProfileInternalDto> userMap =
+                loadUsersMap(reviews);
+
+        return reviews.stream()
+                .map(r -> mapToDto(r, userMap))
                 .toList();
-    }*/
-   public List<ReviewDto> getReviewsByUser(UUID userId) {
-       List<Review> reviews =
-               reviewRepository.findByReviewedUserIdAndType(
-                       userId,
-                       ReviewType.USER
-               );
+    }
 
-       Map<UUID, UserProfileInternalDto> userMap =
-               loadUsersMap(reviews);
+    /* public Double getAverageRatingForItem(Long itemId) {
+         return reviewRepository.getAverageRatingByItem(itemId);
+     }*/
+    public Double getAverageRatingForItem(Long itemId) {
 
-       return reviews.stream()
-               .map(r -> mapToDto(r, userMap))
-               .toList();
-   }
+        // 🔥 récupérer ownerId
+        ItemInternalDTO item = itemClient.getItemById(itemId);
+        UUID ownerId = item.ownerId();
 
-   /* public Double getAverageRatingForItem(Long itemId) {
-        return reviewRepository.getAverageRatingByItem(itemId);
-    }*/
-   public Double getAverageRatingForItem(Long itemId) {
+        Double avg = reviewRepository
+                .getAverageRatingByItemExcludingOwner(itemId, ownerId);
 
-       // 🔥 récupérer ownerId
-       ItemInternalDTO item = itemClient.getItemById(itemId);
-       UUID ownerId = item.ownerId();
-
-       Double avg = reviewRepository
-               .getAverageRatingByItemExcludingOwner(itemId, ownerId);
-
-       return avg != null ? avg : 0.0;
-   }
+        return avg != null ? avg : 0.0;
+    }
 
     public Double getAverageRatingForUser(UUID userId) {
         return reviewRepository.getAverageRatingByUser(userId);
@@ -304,20 +304,4 @@ public class ReviewService {
                 ));
     }
 
-    public List<UserReviewStatsDto> getUsersStats(
-            List<UUID> userIds
-    ) {
-
-        return reviewRepository
-                .getUsersStats(userIds)
-                .stream()
-                .map(r -> new UserReviewStatsDto(
-                        (UUID) r[0],
-                        r[1] != null
-                                ? ((Number) r[1]).doubleValue()
-                                : 0.0,
-                        ((Number) r[2]).longValue()
-                ))
-                .toList();
-    }
 }

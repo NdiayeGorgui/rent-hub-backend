@@ -1,7 +1,10 @@
 package com.smartiadev.auth_service.controller;
 
 
-import com.smartiadev.auth_service.dto.*;
+import com.smartiadev.auth_service.dto.AuctionStrikeResponse;
+import com.smartiadev.auth_service.dto.UserBidEligibilityResponse;
+import com.smartiadev.auth_service.dto.UserProfileInternalDto;
+import com.smartiadev.auth_service.dto.UserResponse;
 
 import com.smartiadev.auth_service.entity.User;
 import com.smartiadev.auth_service.repository.UserRepository;
@@ -48,7 +51,7 @@ public class UserInternalController {
     public List<UserProfileInternalDto> getUserBatch(
             @RequestBody List<UUID> ids
     ) {
-        return profileService.getUsersBatch(ids);
+        return profileService.getUserBatch(ids);
     }
 
 
