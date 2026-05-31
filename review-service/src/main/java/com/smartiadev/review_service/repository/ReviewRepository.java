@@ -115,6 +115,8 @@ public interface ReviewRepository
  );
 
  List<Review> findByReviewedUserIdAndType(UUID reviewedUserId, ReviewType type);
+
+    List<Review> findByRentalIdInAndReviewerId(List<Long> rentalIds, UUID reviewerId);
 }
 
 

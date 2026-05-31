@@ -164,4 +164,14 @@ public class ReviewController {
     public List<ReviewDto> getAllReviewsForUser(@PathVariable UUID userId) {
         return reviewService.getAllReviewsForUser(userId);
     }
+
+    @PostMapping("/has-reviewed-batch")
+    public Map<Long, Boolean> hasReviewedBatch(
+            @RequestBody List<Long> rentalIds,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID reviewerId = UUID.fromString(jwt.getSubject());
+        return reviewService.hasReviewedBatch(rentalIds, reviewerId);
+    }
+
 }

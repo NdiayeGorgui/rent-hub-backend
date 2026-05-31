@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -255,14 +256,52 @@ public class ReviewService {
         return new ReviewDto(
                 review.getId(),
                 review.getItemId(),
+
                 review.getReviewerId(),
                 review.getReviewedUserId(),
+
                 user != null
                         ? user.getUsername()
                         : "Unknown",
+
+                user != null
+                        ? user.getAverageRating()
+                        : 0.0,
+
+                user != null
+                        ? user.getReviewsCount()
+                        : 0L,
+
+                user != null
+                        ? user.getBadge()
+                        : null,
+
                 review.getRating(),
                 review.getComment()
         );
+    }
+
+    public Map<Long, Boolean> hasReviewedBatch(
+            List<Long> rentalIds,
+            UUID reviewerId
+    ) {
+
+        List<Review> reviews =
+                reviewRepository.findByRentalIdInAndReviewerId(
+                        rentalIds,
+                        reviewerId
+                );
+
+        Set<Long> reviewedIds =
+                reviews.stream()
+                        .map(Review::getRentalId)
+                        .collect(Collectors.toSet());
+
+        return rentalIds.stream()
+                .collect(Collectors.toMap(
+                        id -> id,
+                        reviewedIds::contains
+                ));
     }
 
 }
