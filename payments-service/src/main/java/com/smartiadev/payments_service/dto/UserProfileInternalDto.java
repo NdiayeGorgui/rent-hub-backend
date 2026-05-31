@@ -1,12 +1,9 @@
-package com.smartiadev.auth_service.dto;
+package com.smartiadev.payments_service.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
-@AllArgsConstructor
-@NoArgsConstructor
+
 @Data
 public class UserProfileInternalDto {
 

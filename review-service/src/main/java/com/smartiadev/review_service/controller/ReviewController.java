@@ -2,6 +2,7 @@ package com.smartiadev.review_service.controller;
 
 import com.smartiadev.review_service.dto.CreateReviewRequest;
 import com.smartiadev.review_service.dto.ReviewDto;
+import com.smartiadev.review_service.dto.UserReviewStatsDto;
 import com.smartiadev.review_service.entity.Review;
 import com.smartiadev.review_service.repository.ReviewRepository;
 import com.smartiadev.review_service.service.ReviewService;
@@ -172,6 +173,13 @@ public class ReviewController {
     ) {
         UUID reviewerId = UUID.fromString(jwt.getSubject());
         return reviewService.hasReviewedBatch(rentalIds, reviewerId);
+    }
+
+    @PostMapping("/internal/users/stats")
+    public List<UserReviewStatsDto> getUsersStats(
+            @RequestBody List<UUID> userIds
+    ) {
+        return reviewService.getUsersStats(userIds);
     }
 
 }

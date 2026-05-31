@@ -4,10 +4,7 @@ import com.smartiadev.base_domain_service.dto.*;
 import com.smartiadev.base_domain_service.model.PaymentStatus;
 import com.smartiadev.base_domain_service.model.PaymentType;
 import com.smartiadev.payments_service.client.UserClient;
-import com.smartiadev.payments_service.dto.CreatePaymentRequest;
-import com.smartiadev.payments_service.dto.PaymentIntentResponse;
-import com.smartiadev.payments_service.dto.PaymentResponse;
-import com.smartiadev.payments_service.dto.PaymentProviderResult;
+import com.smartiadev.payments_service.dto.*;
 import com.smartiadev.payments_service.entity.Payment;
 import com.smartiadev.payments_service.kafka.PaymentEventPublisher;
 import com.smartiadev.payments_service.repository.PaymentRepository;
@@ -25,7 +22,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.apache.kafka.common.requests.DeleteAclsResponse.log;
 
@@ -378,13 +377,62 @@ public class PaymentService {
                 .toList();
     }
 
-    public List<PaymentResponse> getMyPayments(UUID userId) {
+    /*public List<PaymentResponse> getMyPayments(UUID userId) {
 
         return repository.findByUserId(userId)
                 .stream()
                 .map(this::map)
                 .toList();
+    }*/
+
+    public List<PaymentResponse> getMyPayments(UUID userId) {
+
+        List<Payment> payments =
+                repository.findByUserId(userId);
+
+        List<UUID> userIds =
+                payments.stream()
+                        .map(Payment::getUserId)
+                        .distinct()
+                        .toList();
+
+        Map<UUID, UserResponse> userMap =
+                userClient.getUsersBatch(userIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserResponse::id,
+                                u -> u
+                        ));
+
+        return payments.stream()
+                .map(payment -> {
+
+                    UserResponse user =
+                            userMap.get(payment.getUserId());
+
+                    return new PaymentResponse(
+                            payment.getId(),
+                            payment.getItemId(),
+                            payment.getAuctionId(),
+                            payment.getUserId(),
+                            user != null
+                                    ? user.fullName()
+                                    : "Unknown",
+                            payment.getAmount(),
+                            payment.getType(),
+                            payment.getStatus().name(),
+                            payment.getCreatedAt(),
+                            payment.getPaymentIntentId(),
+                            null,
+                            repository.existsByPaymentIntentIdAndType(
+                                    payment.getPaymentIntentId(),
+                                    PaymentType.AUCTION_REFUND
+                            )
+                    );
+                })
+                .toList();
     }
+
     private PaymentResponse map(Payment payment) {
 
         String fullName = "Unknown";
@@ -532,4 +580,5 @@ public class PaymentService {
                 .orElseThrow(() -> new RuntimeException("Auction fee payment not found"));
         return map(payment);
     }
+
 }

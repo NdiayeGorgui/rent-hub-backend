@@ -117,6 +117,18 @@ public interface ReviewRepository
  List<Review> findByReviewedUserIdAndType(UUID reviewedUserId, ReviewType type);
 
     List<Review> findByRentalIdInAndReviewerId(List<Long> rentalIds, UUID reviewerId);
+
+ @Query("""
+       SELECT r.reviewedUserId,
+              AVG(r.rating),
+              COUNT(r)
+       FROM Review r
+       WHERE r.reviewedUserId IN :userIds
+       GROUP BY r.reviewedUserId
+       """)
+ List<Object[]> getUsersStats(
+         @Param("userIds") List<UUID> userIds
+ );
 }
 
 

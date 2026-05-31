@@ -7,6 +7,7 @@ import com.smartiadev.auth_service.client.SubscriptionClient;
 import com.smartiadev.auth_service.dto.ItemSummaryDto;
 import com.smartiadev.auth_service.dto.UserProfileDto;
 import com.smartiadev.auth_service.dto.UserProfileInternalDto;
+import com.smartiadev.auth_service.dto.UserReviewStatsDto;
 import com.smartiadev.auth_service.entity.User;
 import com.smartiadev.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -82,9 +85,41 @@ public class ProfileService {
      * 🔐 PROFIL PRIVÉ (même base pour l’instant)
      */
     public UserProfileDto getMyProfile(UUID userId) {
-        return getPublicProfile(userId);
-    }
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Double rating = 0.0;
+        Long count = 0L;
+        boolean premium = false;
+
+        try {
+            rating = reviewClient.getAverageRatingForUser(userId);
+        } catch (Exception ignored) {}
+
+        try {
+            count = reviewClient.getReviewsCountForUser(userId);
+        } catch (Exception ignored) {}
+
+        try {
+            premium = subscriptionClient.isPremium(userId);
+        } catch (Exception ignored) {}
+
+        Double safeRating = rating != null ? rating : 0.0;
+        Long safeCount = count != null ? count : 0L;
+
+        return UserProfileDto.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .city(user.getCity())
+                .premium(premium)
+                .averageRating(safeRating)
+                .reviewsCount(safeCount)
+                .badge(computeBadge(safeRating, safeCount))
+                .roles(new ArrayList<>(user.getRoles()))
+                .build();
+    }
     // ⭐ BADGE
     private String computeBadge(Double rating, Long count) {
 
@@ -95,11 +130,53 @@ public class ProfileService {
         return "AVERAGE";
     }
 
-    public List<UserProfileInternalDto> getUsersBatch(List<UUID> ids) {
+    public List<UserProfileInternalDto> getUsersBatch(
+            List<UUID> ids
+    ) {
 
-        return userRepository.findAllById(ids)
-                .stream()
-                .map(this::mapInternal)
+        List<User> users = userRepository.findAllById(ids);
+
+        Map<UUID, UserReviewStatsDto> statsMap =
+                reviewClient.getUsersStats(ids)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserReviewStatsDto::userId,
+                                s -> s
+                        ));
+
+        return users.stream()
+                .map(user -> {
+
+                    UserReviewStatsDto stats =
+                            statsMap.get(user.getId());
+
+                    Double rating =
+                            stats != null
+                                    ? stats.averageRating()
+                                    : 0.0;
+
+                    Long reviews =
+                            stats != null
+                                    ? stats.reviewsCount()
+                                    : 0L;
+
+                    UserProfileInternalDto dto =
+                            new UserProfileInternalDto();
+
+                    dto.setUserId(user.getId());
+                    dto.setUsername(user.getUsername());
+                    dto.setFullName(user.getFullName());
+                    dto.setCity(user.getCity());
+
+                    dto.setAverageRating(rating);
+                    dto.setReviewsCount(reviews);
+
+                    dto.setBadge(
+                            computeBadge(rating, reviews)
+                    );
+
+                    return dto;
+                })
                 .toList();
     }
 
@@ -170,4 +247,6 @@ public class ProfileService {
 
         return dto;
     }
+
+
 }

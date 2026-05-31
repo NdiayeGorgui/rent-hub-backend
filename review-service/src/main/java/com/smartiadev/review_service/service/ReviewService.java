@@ -304,4 +304,20 @@ public class ReviewService {
                 ));
     }
 
+    public List<UserReviewStatsDto> getUsersStats(
+            List<UUID> userIds
+    ) {
+
+        return reviewRepository
+                .getUsersStats(userIds)
+                .stream()
+                .map(r -> new UserReviewStatsDto(
+                        (UUID) r[0],
+                        r[1] != null
+                                ? ((Number) r[1]).doubleValue()
+                                : 0.0,
+                        ((Number) r[2]).longValue()
+                ))
+                .toList();
+    }
 }

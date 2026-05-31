@@ -247,4 +247,5 @@ public class AuthService {
         user.setResetTokenExpiry(null);
         userRepository.save(user);
     }
+
 }
