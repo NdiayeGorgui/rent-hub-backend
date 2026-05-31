@@ -85,41 +85,9 @@ public class ProfileService {
      * 🔐 PROFIL PRIVÉ (même base pour l’instant)
      */
     public UserProfileDto getMyProfile(UUID userId) {
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Double rating = 0.0;
-        Long count = 0L;
-        boolean premium = false;
-
-        try {
-            rating = reviewClient.getAverageRatingForUser(userId);
-        } catch (Exception ignored) {}
-
-        try {
-            count = reviewClient.getReviewsCountForUser(userId);
-        } catch (Exception ignored) {}
-
-        try {
-            premium = subscriptionClient.isPremium(userId);
-        } catch (Exception ignored) {}
-
-        Double safeRating = rating != null ? rating : 0.0;
-        Long safeCount = count != null ? count : 0L;
-
-        return UserProfileDto.builder()
-                .userId(user.getId())
-                .username(user.getUsername())
-                .fullName(user.getFullName())
-                .city(user.getCity())
-                .premium(premium)
-                .averageRating(safeRating)
-                .reviewsCount(safeCount)
-                .badge(computeBadge(safeRating, safeCount))
-                .roles(new ArrayList<>(user.getRoles()))
-                .build();
+        return getPublicProfile(userId);
     }
+
     // ⭐ BADGE
     private String computeBadge(Double rating, Long count) {
 
