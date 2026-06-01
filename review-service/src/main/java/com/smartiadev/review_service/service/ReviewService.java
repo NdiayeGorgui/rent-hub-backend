@@ -304,4 +304,18 @@ public class ReviewService {
                 ));
     }
 
+    public UserReviewStatsDto getUserStats(UUID userId) {
+
+        Double rating =
+                reviewRepository.getAverageRatingForUser(userId);
+
+        Long count =
+                reviewRepository.countReviewsForUser(userId);
+
+        return new UserReviewStatsDto(
+                rating != null ? rating : 0.0,
+                count != null ? count : 0L
+        );
+    }
+
 }

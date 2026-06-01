@@ -29,11 +29,11 @@ public interface ReviewClient {
     List<UserReviewStatsDto> getUsersStats(
             @RequestBody List<UUID> userIds
     );
-
-   /* @GetMapping("/api/reviews/internal/users/{userId}/stats")
+    @GetMapping("/api/reviews/internal/users/{userId}/stats")
     UserReviewStatsDto getUserStats(
             @PathVariable UUID userId
-    );*/
+    );
+
 
 }
 

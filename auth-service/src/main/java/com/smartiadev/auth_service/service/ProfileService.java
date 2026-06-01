@@ -4,10 +4,7 @@ import com.smartiadev.auth_service.client.ItemClient;
 import com.smartiadev.auth_service.client.RentalClient;
 import com.smartiadev.auth_service.client.ReviewClient;
 import com.smartiadev.auth_service.client.SubscriptionClient;
-import com.smartiadev.auth_service.dto.ItemSummaryDto;
-import com.smartiadev.auth_service.dto.MyProfileDto;
-import com.smartiadev.auth_service.dto.UserProfileDto;
-import com.smartiadev.auth_service.dto.UserProfileInternalDto;
+import com.smartiadev.auth_service.dto.*;
 import com.smartiadev.auth_service.entity.User;
 import com.smartiadev.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -87,16 +84,20 @@ public class ProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Double rating = 0.0;
-        Long count = 0L;
+
         boolean premium = false;
 
-        try {
-            rating = reviewClient.getAverageRatingForUser(userId);
-        } catch (Exception ignored) {}
+        Double rating = 0.0;
+        Long count = 0L;
 
         try {
-            count = reviewClient.getReviewsCountForUser(userId);
+
+            UserReviewStatsDto stats =
+                    reviewClient.getUserStats(userId);
+
+            rating = stats.averageRating();
+            count = stats.reviewsCount();
+
         } catch (Exception ignored) {}
 
         try {

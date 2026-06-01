@@ -175,5 +175,12 @@ public class ReviewController {
         return reviewService.hasReviewedBatch(rentalIds, reviewerId);
     }
 
+    @GetMapping("/internal/users/{userId}/stats")
+    public UserReviewStatsDto getUserStats(
+            @PathVariable UUID userId
+    ) {
+        return reviewService.getUserStats(userId);
+    }
+
 
 }
