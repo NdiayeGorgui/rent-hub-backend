@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -84,28 +85,45 @@ public class ProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        CompletableFuture<UserReviewStatsDto> statsFuture =
+                CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return reviewClient.getUserStats(userId);
+                    } catch (Exception e) {
+                        return new UserReviewStatsDto(
+                                0.0,
+                                0L
+                        );
+                    }
+                });
 
-        boolean premium = false;
+        CompletableFuture<Boolean> premiumFuture =
+                CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return subscriptionClient.isPremium(userId);
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
-        Double rating = 0.0;
-        Long count = 0L;
+        CompletableFuture.allOf(
+                statsFuture,
+                premiumFuture
+        ).join();
 
-        try {
+        UserReviewStatsDto stats = statsFuture.join();
 
-            UserReviewStatsDto stats =
-                    reviewClient.getUserStats(userId);
+        Double rating =
+                stats.averageRating() != null
+                        ? stats.averageRating()
+                        : 0.0;
 
-            rating = stats.averageRating();
-            count = stats.reviewsCount();
+        Long reviewsCount =
+                stats.reviewsCount() != null
+                        ? stats.reviewsCount()
+                        : 0L;
 
-        } catch (Exception ignored) {}
-
-        try {
-            premium = subscriptionClient.isPremium(userId);
-        } catch (Exception ignored) {}
-
-        Double safeRating = rating != null ? rating : 0.0;
-        Long safeCount = count != null ? count : 0L;
+        boolean premium = premiumFuture.join();
 
         return MyProfileDto.builder()
                 .userId(user.getId())
@@ -113,9 +131,9 @@ public class ProfileService {
                 .fullName(user.getFullName())
                 .city(user.getCity())
                 .premium(premium)
-                .averageRating(safeRating)
-                .reviewsCount(safeCount)
-                .badge(computeBadge(safeRating, safeCount))
+                .averageRating(rating)
+                .reviewsCount(reviewsCount)
+                .badge(computeBadge(rating, reviewsCount))
                 .build();
     }
 
