@@ -3,6 +3,7 @@ package com.smartiadev.auth_service.dto;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -20,4 +21,5 @@ public class MyProfileDto {
     private Long reviewsCount;
 
     private String badge;
+    private List<String> roles;
 }

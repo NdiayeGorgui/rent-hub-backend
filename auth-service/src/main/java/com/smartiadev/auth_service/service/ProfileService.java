@@ -134,6 +134,7 @@ public class ProfileService {
                 .averageRating(rating)
                 .reviewsCount(reviewsCount)
                 .badge(computeBadge(rating, reviewsCount))
+                .roles(new ArrayList<>(user.getRoles()))
                 .build();
     }
 
