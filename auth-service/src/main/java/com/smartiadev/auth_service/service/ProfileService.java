@@ -5,6 +5,7 @@ import com.smartiadev.auth_service.client.RentalClient;
 import com.smartiadev.auth_service.client.ReviewClient;
 import com.smartiadev.auth_service.client.SubscriptionClient;
 import com.smartiadev.auth_service.dto.ItemSummaryDto;
+import com.smartiadev.auth_service.dto.MyProfileDto;
 import com.smartiadev.auth_service.dto.UserProfileDto;
 import com.smartiadev.auth_service.dto.UserProfileInternalDto;
 import com.smartiadev.auth_service.entity.User;
@@ -81,8 +82,40 @@ public class ProfileService {
     /**
      * 🔐 PROFIL PRIVÉ (même base pour l’instant)
      */
-    public UserProfileDto getMyProfile(UUID userId) {
-        return getPublicProfile(userId);
+    public MyProfileDto getMyProfile(UUID userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Double rating = 0.0;
+        Long count = 0L;
+        boolean premium = false;
+
+        try {
+            rating = reviewClient.getAverageRatingForUser(userId);
+        } catch (Exception ignored) {}
+
+        try {
+            count = reviewClient.getReviewsCountForUser(userId);
+        } catch (Exception ignored) {}
+
+        try {
+            premium = subscriptionClient.isPremium(userId);
+        } catch (Exception ignored) {}
+
+        Double safeRating = rating != null ? rating : 0.0;
+        Long safeCount = count != null ? count : 0L;
+
+        return MyProfileDto.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .city(user.getCity())
+                .premium(premium)
+                .averageRating(safeRating)
+                .reviewsCount(safeCount)
+                .badge(computeBadge(safeRating, safeCount))
+                .build();
     }
 
     // ⭐ BADGE

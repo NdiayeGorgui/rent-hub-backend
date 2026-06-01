@@ -1,5 +1,6 @@
 package com.smartiadev.auth_service.controller;
 
+import com.smartiadev.auth_service.dto.MyProfileDto;
 import com.smartiadev.auth_service.dto.UserProfileDto;
 import com.smartiadev.auth_service.dto.UserProfileInternalDto;
 import com.smartiadev.auth_service.service.ProfileService;
@@ -39,7 +40,7 @@ public class ProfileController {
     })
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/me")
-    public UserProfileDto getMyProfile(
+    public MyProfileDto getMyProfile(
             @AuthenticationPrincipal Jwt jwt
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
