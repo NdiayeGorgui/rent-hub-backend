@@ -175,11 +175,5 @@ public class ReviewController {
         return reviewService.hasReviewedBatch(rentalIds, reviewerId);
     }
 
-    @PostMapping("/internal/users/stats")
-    public List<UserReviewStatsDto> getUsersStats(
-            @RequestBody List<UUID> userIds
-    ) {
-        return reviewService.getUsersStats(userIds);
-    }
 
 }
