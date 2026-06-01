@@ -8,4 +8,7 @@ public interface ReviewPublicClient {
 
     @GetMapping("/api/reviews/stats/public/average")
     Double getPlatformAverageRating();
+
 }
+
+
