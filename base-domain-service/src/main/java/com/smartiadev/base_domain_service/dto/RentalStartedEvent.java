@@ -6,6 +6,7 @@ public record RentalStartedEvent(
         Long rentalId,
         Long itemId,
         UUID ownerId,
-        UUID renterId
+        UUID renterId,
+        String itemTitle
 ) {}
 

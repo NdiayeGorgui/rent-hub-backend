@@ -1,6 +1,7 @@
 package com.smartiadev.rental_service.scheduler;
 
 import com.smartiadev.base_domain_service.dto.RentalStartedEvent;
+import com.smartiadev.rental_service.client.ItemClient;
 import com.smartiadev.rental_service.entity.RentalStatus;
 import com.smartiadev.rental_service.entity.Rental;
 import com.smartiadev.rental_service.kafka.RentalEventProducer;
@@ -19,10 +20,13 @@ public class RentalStatusScheduler {
 
     private final RentalRepository repository;
     private final RentalEventProducer eventProducer;
+    private final ItemClient itemClient;
 
     @Scheduled(cron = "0 0 * * * *") // toutes les heures
     @Transactional
     public void startRentals() {
+
+
 
         LocalDate today = LocalDate.now();
 
@@ -34,12 +38,16 @@ public class RentalStatusScheduler {
 
         for (Rental rental : toStart) {
             rental.setStatus(RentalStatus.ONGOING);
+            // 📦 récupérer item
+            var item = itemClient.getItem(rental.getItemId());
+            String itemTitle = item.title();
             eventProducer.sendRentalStarted(
                     new RentalStartedEvent(
                             rental.getId(),
                             rental.getItemId(),
                             rental.getOwnerId(),
-                            rental.getRenterId()
+                            rental.getRenterId(),
+                            itemTitle
                     )
             );
         }
