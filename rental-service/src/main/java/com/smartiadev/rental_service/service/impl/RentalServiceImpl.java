@@ -268,7 +268,8 @@ public class RentalServiceImpl implements RentalService {
                             rental.getId(),
                             rental.getItemId(),
                             rental.getOwnerId(),
-                            rental.getRenterId()
+                            rental.getRenterId(),
+                            itemTitle
                     )
             );
         }
