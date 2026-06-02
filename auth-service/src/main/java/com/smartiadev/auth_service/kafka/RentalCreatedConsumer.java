@@ -19,7 +19,7 @@ public class RentalCreatedConsumer {
     private final JavaMailSender mailSender;
 
     @KafkaListener(
-            topics = "rental-created",
+            topics = "rental.created",
             groupId = "auth-service"
     )
     public void consume(RentalCreatedEvent event) {
