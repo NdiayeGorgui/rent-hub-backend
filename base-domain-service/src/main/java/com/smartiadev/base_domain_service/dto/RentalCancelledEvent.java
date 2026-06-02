@@ -6,6 +6,7 @@ public record RentalCancelledEvent(
         Long rentalId,
         Long itemId,
         UUID renterId,
-        String reason
+        String reason,
+        String itemTitle
 ) {}
 

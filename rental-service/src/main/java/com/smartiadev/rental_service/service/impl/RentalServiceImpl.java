@@ -211,6 +211,11 @@ public class RentalServiceImpl implements RentalService {
         Rental rental = repository.findById(rentalId)
                 .orElseThrow(() -> new RuntimeException("Rental not found"));
 
+        ItemInternalDTO item =
+                itemClient.getItem(rental.getItemId());
+
+        String itemTitle = item.title();
+
         // 🔐 sécurité propriétaire
         System.out.println("JWT OWNER ID: " + ownerId);
         System.out.println("RENTAL OWNER ID: " + rental.getOwnerId());
@@ -284,7 +289,8 @@ public class RentalServiceImpl implements RentalService {
                                 r.getId(),
                                 r.getItemId(),
                                 r.getRenterId(),
-                                "ITEM_ALREADY_RENTED"
+                                "ITEM_ALREADY_RENTED",
+                                itemTitle
                         )
                 );
             }
