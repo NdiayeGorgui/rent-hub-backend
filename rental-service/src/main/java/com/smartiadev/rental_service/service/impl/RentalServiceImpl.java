@@ -83,6 +83,11 @@ public class RentalServiceImpl implements RentalService {
                 .build();
 
         Rental saved = repository.save(rental);
+        UserProfileInternalDto renter =
+                authClient.getUsersBatch(List.of(renterId))
+                        .stream()
+                        .findFirst()
+                        .orElse(null);
 
         // 📡 Kafka notification propriétaire
         eventProducer.sendRentalCreated(
@@ -90,7 +95,11 @@ public class RentalServiceImpl implements RentalService {
                         saved.getId(),
                         saved.getItemId(),
                         saved.getOwnerId(),
-                        saved.getRenterId()
+                        saved.getRenterId(),
+                        renter != null ? renter.getUsername() : null,
+                        item.title(),
+                        saved.getStartDate(),
+                        saved.getEndDate()
                 )
         );
 
