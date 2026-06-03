@@ -1,5 +1,6 @@
 package com.smartiadev.auth_service.client;
 
+import com.smartiadev.auth_service.config.FeignAuthConfig;
 import com.smartiadev.auth_service.dto.ReviewStatsDto;
 import com.smartiadev.auth_service.dto.UserReviewStatsDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "review-service", contextId = "reviewAdminClient")
+@FeignClient(name = "review-service", contextId = "reviewAdminClient", configuration = FeignAuthConfig.class)
 public interface ReviewClient {
 
     @GetMapping("/api/reviews/user/{userId}/average")

@@ -1,5 +1,6 @@
 package com.smartiadev.auth_service.client;
 
+import com.smartiadev.auth_service.config.FeignAuthConfig;
 import com.smartiadev.auth_service.dto.ItemSummaryDto;
 import com.smartiadev.auth_service.dto.RentalStatsDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.List;
 import java.util.UUID;
 
-@FeignClient(name = "rental-service")
+@FeignClient(name = "rental-service", configuration = FeignAuthConfig.class)
 public interface RentalClient {
 
     @GetMapping("/api/rentals/user/{userId}/history")

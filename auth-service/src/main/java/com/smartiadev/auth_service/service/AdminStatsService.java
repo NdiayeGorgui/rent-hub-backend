@@ -127,9 +127,9 @@ public class AdminStatsService {
         return new AdminStats(
                 totalUsers,
                 activeUsers,
-                itemStats,
+                itemStats != null ? itemStats : new ItemStatsDto(0L, 0L),
                 rentalStats,
-                reviewStats,
+                reviewStats != null ? reviewStats : new ReviewStatsDto(0L, 0.0),
                 auctionStats,
                 subscriptionStats,
                 paymentStats,
