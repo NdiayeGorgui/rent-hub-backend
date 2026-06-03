@@ -17,6 +17,8 @@ public class AuctionStatsService {
                 auctionRepository.count(),
                 auctionRepository.countByStatus(AuctionStatus.OPEN),
                 auctionRepository.countByStatus(AuctionStatus.CLOSED),
+                auctionRepository.countByStatus(AuctionStatus.CANCELLED),
+                auctionRepository.countByStatus(AuctionStatus.RESERVE_NOT_MET),
                 auctionRepository.countAuctionsWithWinner(),
                 auctionRepository.countAuctionsWithoutBid(),
                 auctionRepository.averageWinningPrice()

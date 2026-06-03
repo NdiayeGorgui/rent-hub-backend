@@ -91,7 +91,7 @@ public class AdminStatsService {
         CompletableFuture<AuctionStats> auctionStatsFuture =
                 CompletableFuture.supplyAsync(auctionClient::getAuctionStats, taskExecutor).exceptionally(ex -> {
                     System.out.println("❌ ItemStats failed: " + ex.getMessage());
-                    return new AuctionStats(0L, 0L,0L,0L,0L,0.0);
+                    return new AuctionStats(0L, 0L,0L,0L,0L,0L,0L,0.0);
                 });
 
         CompletableFuture<SubscriptionStats> subscriptionStatsFuture =
