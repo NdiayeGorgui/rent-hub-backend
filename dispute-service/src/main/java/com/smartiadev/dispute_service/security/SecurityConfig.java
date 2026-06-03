@@ -33,13 +33,14 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // 🔓 API public (si tu as des endpoints publics, sinon retire)
                         //.requestMatchers("/api/disputes/public/**").permitAll()
+                        .requestMatchers(
+                                "/api/admin/disputes/stats/internal/stats"
+                        ).permitAll()
 
                         // 🔐 ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/users/internal/**").permitAll()
-                        .requestMatchers(
-                                "/api/admin/disputes/stats/internal/stats"
-                        ).permitAll()
+
 
                         // 🔐 REST authentifié pour les autres endpoints
                         .requestMatchers("/api/disputes/**").authenticated()

@@ -40,6 +40,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**"
                         ).permitAll()
+                        .requestMatchers(
+                                "/api/auctions/internal/stats"
+                        ).permitAll()
                         // 🔓 Autoriser les appels internes
                         .requestMatchers("/api/users/internal/**").permitAll()
                         .requestMatchers(
