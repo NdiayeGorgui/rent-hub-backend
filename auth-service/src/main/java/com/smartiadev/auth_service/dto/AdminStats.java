@@ -2,33 +2,16 @@ package com.smartiadev.auth_service.dto;
 
 public record AdminStats(
 
-        // 👤 UTILISATEURS
+        // 👤 USERS (reste simple)
         Long totalUsers,
         Long activeUsers,
 
-        // 📦 ARTICLES
-        Long totalItems,
-        Long publishedItems,
-
-        // 🔁 LOCATIONS
-        Long totalRentals,
-        Long activeRentals,
-        Double totalRevenue,
-
-        // ⭐ AVIS
-        Long totalReviews,
-        Double averagePlatformRating,
-
-        // ⚖️ DISPUTES
-        DisputeStats disputeStats,
-
-        // ⚖️ AUCTIONS
+        // 📦 STATS MICROSERVICES
+        ItemStatsDto itemStats,
+        RentalStatsDto rentalStats,
+        ReviewStatsDto reviewStats,
         AuctionStats auctionStats,
-
-        // ⚖️ SUBSCRIPTIONS
         SubscriptionStats subscriptionStats,
-
-        // ⚖️ PAYMENTS
-        PaymentStats paymentStats
-
+        PaymentStats paymentStats,
+        DisputeStats disputeStats
 ) {}

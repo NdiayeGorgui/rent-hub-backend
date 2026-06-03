@@ -1,5 +1,7 @@
 package com.smartiadev.review_service.controller;
 
+import com.smartiadev.review_service.dto.ReviewStatsDto;
+import com.smartiadev.review_service.repository.ReviewRepository;
 import com.smartiadev.review_service.service.ReviewStatsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 public class ReviewStatsController {
 
     private final ReviewStatsService reviewStatsService;
+    private final ReviewRepository reviewRepository;
 
     /* =====================
       COUNT ALL REVIEWS
@@ -58,5 +61,17 @@ public class ReviewStatsController {
     @GetMapping("/average/platform")
     public Double getPlatformAverageRating() {
         return reviewStatsService.getPlatformAverageRating();
+    }
+
+    @GetMapping("/internal/stats")
+    public ReviewStatsDto getStats() {
+
+        Long total = reviewRepository.count();
+        Double avg = reviewRepository.getPlatformAverageRating();
+
+        return new ReviewStatsDto(
+                total,
+                avg != null ? avg : 0.0
+        );
     }
 }

@@ -1,6 +1,7 @@
 package com.smartiadev.auth_service.client;
 
 import com.smartiadev.auth_service.dto.ItemSummaryDto;
+import com.smartiadev.auth_service.dto.RentalStatsDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,4 +25,7 @@ public interface RentalClient {
 
     @GetMapping("/api/admin/rentals/stats/revenue")
     Double getTotalRevenue();
+
+    @GetMapping("/api/admin/rentals/stats/internal/stats")
+    RentalStatsDto getStats();
 }

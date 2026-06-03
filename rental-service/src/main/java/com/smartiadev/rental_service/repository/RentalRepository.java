@@ -98,4 +98,6 @@ AND r.endDate >= :startDate
     AND r.status IN ('ONGOING', 'ENDED')
 """)
     Long getTotalDaysRented(Long itemId);
+
+
 }

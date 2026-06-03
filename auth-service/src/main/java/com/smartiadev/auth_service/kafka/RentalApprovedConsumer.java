@@ -50,6 +50,8 @@ public class RentalApprovedConsumer {
     ) {
 
         SimpleMailMessage mail = new SimpleMailMessage();
+        String rentalLink =
+                "https://app.gonifty.ca/rentals";
 
         mail.setFrom("team.smartiadev@gmail.com");
         mail.setTo(renter.getEmail());
@@ -69,7 +71,7 @@ public class RentalApprovedConsumer {
 
                         "Vous pouvez consulter les détails de votre location sur Gonifty :\n\n" +
 
-                        "https://app.gonifty.ca/rentals\n\n" +
+                        rentalLink + "\n\n" +
 
                         "Merci de votre confiance,\n" +
                         "L'équipe Gonifty"

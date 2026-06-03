@@ -1,5 +1,7 @@
 package com.smartiadev.item_service.controller;
 
+import com.smartiadev.item_service.dto.ItemStatsDto;
+import com.smartiadev.item_service.repository.ItemRepository;
 import com.smartiadev.item_service.service.ItemStatsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class ItemStatsController {
 
     private final ItemStatsService itemStatsService;
+    private final ItemRepository itemRepository;
 
     /* =====================
         COUNT ALL ITEMS
@@ -56,5 +59,12 @@ public class ItemStatsController {
         return itemStatsService.countPublishedItems();
     }
 
+    @GetMapping
+    public ItemStatsDto getStats() {
 
+        return new ItemStatsDto(
+                itemRepository.count(),
+                itemRepository.countByActiveTrue()
+        );
+    }
 }

@@ -1,5 +1,6 @@
 package com.smartiadev.auth_service.client;
 
+import com.smartiadev.auth_service.dto.ItemStatsDto;
 import com.smartiadev.auth_service.dto.ItemSummaryDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,4 +22,7 @@ public interface ItemClient {
 
     @GetMapping("/api/admin/items/stats/count/published")
     Long countPublishedItems();
+
+    @GetMapping("/api/admin/items/stats")
+    ItemStatsDto getStats();
 }

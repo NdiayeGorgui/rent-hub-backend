@@ -1,5 +1,6 @@
 package com.smartiadev.auth_service.client;
 
+import com.smartiadev.auth_service.dto.ReviewStatsDto;
 import com.smartiadev.auth_service.dto.UserReviewStatsDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +34,9 @@ public interface ReviewClient {
     UserReviewStatsDto getUserStats(
             @PathVariable UUID userId
     );
+
+    @GetMapping("/api/admin/reviews/stats/internal/stats")
+    ReviewStatsDto getStats();
 
 
 }

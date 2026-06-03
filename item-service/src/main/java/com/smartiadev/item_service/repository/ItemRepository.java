@@ -18,6 +18,7 @@ public interface ItemRepository extends JpaRepository<Item, Long>,  JpaSpecifica
 
     List<Item> findByOwnerId(UUID ownerId);
     Page<Item> findByOwnerId(UUID ownerId, Pageable pageable);
+    Long countByActiveTrue();
 
     @Query("""
 SELECT i FROM Item i

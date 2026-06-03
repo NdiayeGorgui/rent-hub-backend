@@ -1,5 +1,7 @@
 package com.smartiadev.rental_service.controller;
 
+import com.smartiadev.rental_service.dto.RentalStatsDto;
+import com.smartiadev.rental_service.repository.RentalRepository;
 import com.smartiadev.rental_service.service.RentalStatsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/rentals/stats")
 @RequiredArgsConstructor
@@ -21,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class RentalStatsController {
 
     private final RentalStatsService rentalStatsService;
+    private final RentalRepository rentalRepository;
 
     /* =====================
       COUNT ALL RENTALS
@@ -77,5 +82,19 @@ public class RentalStatsController {
     @GetMapping("/revenue")
     public Double getTotalRevenue() {
         return rentalStatsService.getTotalRevenue();
+    }
+
+    @GetMapping("/internal/stats")
+    public RentalStatsDto getStats() {
+
+        Long total = rentalRepository.count();
+        Long active = rentalRepository.countActiveRentals();
+        Double revenue = rentalRepository.getTotalRevenue();
+
+        return new RentalStatsDto(
+                total,
+                active,
+                revenue != null ? revenue : 0.0
+        );
     }
 }

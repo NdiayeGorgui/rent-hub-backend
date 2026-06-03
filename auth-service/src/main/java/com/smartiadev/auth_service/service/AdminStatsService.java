@@ -4,10 +4,17 @@ import com.smartiadev.auth_service.client.*;
 import com.smartiadev.auth_service.dto.*;
 import com.smartiadev.auth_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+
 @Service
-@RequiredArgsConstructor
+//@Cacheable(value = "adminStats")
 public class AdminStatsService {
 
     private final UserRepository userRepository;
@@ -22,53 +29,111 @@ public class AdminStatsService {
     private final AuctionPublicClient auctionPublicClient;
     private final ReviewPublicClient reviewPublicClient;
 
+    private final Executor taskExecutor;
+
+    public AdminStatsService(
+            UserRepository userRepository,
+            ItemClient itemClient,
+            RentalClient rentalClient,
+            ReviewClient reviewClient,
+            DisputeClient disputeClient,
+            AuctionClient auctionClient,
+            SubscriptionClient subscriptionClient,
+            PaymentClient paymentClient,
+            ItemPublicClient itemPublicClient,
+            AuctionPublicClient auctionPublicClient,
+            ReviewPublicClient reviewPublicClient,
+            @Qualifier("applicationTaskExecutor") Executor taskExecutor
+    ) {
+        this.userRepository = userRepository;
+        this.itemClient = itemClient;
+        this.rentalClient = rentalClient;
+        this.reviewClient = reviewClient;
+        this.disputeClient = disputeClient;
+        this.auctionClient = auctionClient;
+        this.subscriptionClient = subscriptionClient;
+        this.paymentClient = paymentClient;
+        this.itemPublicClient = itemPublicClient;
+        this.auctionPublicClient = auctionPublicClient;
+        this.reviewPublicClient = reviewPublicClient;
+        this.taskExecutor = taskExecutor;
+    }
+
+
     public AdminStats getStats() {
 
-        // 👤 USERS
         Long totalUsers = userRepository.count();
-        Long activeUsers = userRepository.countActiveUsers(); // ex: enabled=true
+        Long activeUsers = userRepository.countActiveUsers();
 
-        // 📦 ITEMS
-        Long totalItems = itemClient.countAllItems();
-        Long publishedItems = itemClient.countPublishedItems();
+        CompletableFuture<ItemStatsDto> itemStatsFuture =
+                CompletableFuture.supplyAsync(itemClient::getStats, taskExecutor ).exceptionally(ex -> {
+                    System.out.println("❌ ItemStats failed: " + ex.getMessage());
+                    return new ItemStatsDto(0L, 0L);
+                });
 
-        // 🔁 RENTALS
-        Long totalRentals = rentalClient.countAllRentals();
-        Long activeRentals = rentalClient.countActiveRentals();
-       // Double totalRevenue = rentalClient.getTotalRevenue();
+        CompletableFuture<RentalStatsDto> rentalStatsFuture =
+                CompletableFuture.supplyAsync(rentalClient::getStats, taskExecutor).exceptionally(ex -> {
+                    System.out.println("❌ ItemStats failed: " + ex.getMessage());
+                    return new RentalStatsDto(0L, 0L,0.0);
+                });
+        CompletableFuture<ReviewStatsDto> reviewStatsFuture =
+                CompletableFuture.supplyAsync(reviewClient::getStats, taskExecutor).exceptionally(ex -> {
+                    System.out.println("❌ ItemStats failed: " + ex.getMessage());
+                    return new ReviewStatsDto(0L, 0.0);
+                });
 
-        // ⭐ REVIEWS
-        Long totalReviews = reviewClient.countAllReviews();
-        Double avgRating = reviewClient.getPlatformAverageRating();
+        CompletableFuture<DisputeStats> disputeStatsFuture =
+                CompletableFuture.supplyAsync(disputeClient::getDisputeStats, taskExecutor).exceptionally(ex -> {
+                    System.out.println("❌ ItemStats failed: " + ex.getMessage());
+                    return new DisputeStats(0L, 0L,0L,0L,0L,0L,0.0,0L);
+                });
 
-        // ⚖️ DISPUTES
-        DisputeStats disputeStats = disputeClient.getDisputeStats();
+        CompletableFuture<AuctionStats> auctionStatsFuture =
+                CompletableFuture.supplyAsync(auctionClient::getAuctionStats, taskExecutor).exceptionally(ex -> {
+                    System.out.println("❌ ItemStats failed: " + ex.getMessage());
+                    return new AuctionStats(0L, 0L,0L,0L,0L,0.0);
+                });
 
-        // 🔨 AUCTIONS
-        AuctionStats auctionStats = auctionClient.getAuctionStats();
+        CompletableFuture<SubscriptionStats> subscriptionStatsFuture =
+                CompletableFuture.supplyAsync(subscriptionClient::getStats, taskExecutor).exceptionally(ex -> {
+                    System.out.println("❌ ItemStats failed: " + ex.getMessage());
+                    return new SubscriptionStats(0L, 0L,0L,0L);
+                });
 
-        // 💎 SUBSCRIPTIONS
-        SubscriptionStats subscriptionStats = subscriptionClient.getStats();
+        CompletableFuture<PaymentStats> paymentStatsFuture =
+                CompletableFuture.supplyAsync(paymentClient::getStats, taskExecutor).exceptionally(ex -> {
+                    System.out.println("❌ ItemStats failed: " + ex.getMessage());
+                    return new PaymentStats(0L, 0L,0L,0L,0.0);
+                });
 
-        // 💳 PAYMENTS
-        PaymentStats paymentStats = paymentClient.getStats();
+        CompletableFuture.allOf(
+                itemStatsFuture,
+                rentalStatsFuture,
+                reviewStatsFuture,
+                disputeStatsFuture,
+                auctionStatsFuture,
+                subscriptionStatsFuture,
+                paymentStatsFuture
+        ).join();
 
-        Double totalRevenue = paymentStats.totalAmount();
+        ItemStatsDto itemStats = itemStatsFuture.join();
+        RentalStatsDto rentalStats = rentalStatsFuture.join();
+        ReviewStatsDto reviewStats = reviewStatsFuture.join();
+        DisputeStats disputeStats = disputeStatsFuture.join();
+        AuctionStats auctionStats = auctionStatsFuture.join();
+        SubscriptionStats subscriptionStats = subscriptionStatsFuture.join();
+        PaymentStats paymentStats = paymentStatsFuture.join();
 
         return new AdminStats(
                 totalUsers,
                 activeUsers,
-                totalItems,
-                publishedItems,
-                totalRentals,
-                activeRentals,
-                totalRevenue,
-                totalReviews,
-                avgRating != null ? avgRating : 0.0,
-                disputeStats,
+                itemStats,
+                rentalStats,
+                reviewStats,
                 auctionStats,
                 subscriptionStats,
-                paymentStats
+                paymentStats,
+                disputeStats
         );
     }
 

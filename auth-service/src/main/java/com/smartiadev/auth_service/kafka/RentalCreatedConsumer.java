@@ -46,6 +46,8 @@ public class RentalCreatedConsumer {
     ) {
 
         SimpleMailMessage mail = new SimpleMailMessage();
+        String rentalLink =
+                "https://app.gonifty.ca/rentals";
 
         mail.setFrom("team.smartiadev@gmail.com");
         mail.setTo(owner.getEmail());
@@ -66,7 +68,7 @@ public class RentalCreatedConsumer {
                         "Cette demande est en attente de votre approbation.\n\n" +
 
                         "Connectez-vous à Gonifty pour l'accepter ou la refuser :\n" +
-                        "https://app.gonifty.ca/rentals\n\n" +
+                        rentalLink + "\n\n" +
 
                         "Merci,\n" +
                         "L'équipe Gonifty"
