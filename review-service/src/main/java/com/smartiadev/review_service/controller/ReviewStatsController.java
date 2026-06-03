@@ -69,6 +69,11 @@ public class ReviewStatsController {
         Long total = reviewRepository.countAllReviews();
         Double avg = reviewRepository.getPlatformAverageRating();
 
+        System.out.println(
+                "⭐ REVIEW STATS | Total avis = " + total +
+                        " | Note moyenne = " + (avg != null ? avg : 0.0)
+        );
+
         return new ReviewStatsDto(
                 total,
                 avg != null ? avg : 0.0

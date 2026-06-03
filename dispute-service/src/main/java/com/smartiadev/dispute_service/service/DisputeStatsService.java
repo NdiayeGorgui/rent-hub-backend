@@ -16,7 +16,7 @@ public class DisputeStatsService {
 
     public DisputeStats getStats() {
 
-        return new DisputeStats(
+        DisputeStats stats = new DisputeStats(
                 repository.count(),
                 repository.countByStatus(DisputeStatus.OPEN),
                 repository.countByStatus(DisputeStatus.IN_REVIEW),
@@ -26,5 +26,9 @@ public class DisputeStatsService {
                 repository.avgResolutionTimeMinutes(),
                 repository.countWithAdminDecision()
         );
+        System.out.println("========== 📊 DISPUTE STATS ==========");
+        System.out.println("DISPUTE STATS = " + stats);
+
+        return stats;
     }
 }

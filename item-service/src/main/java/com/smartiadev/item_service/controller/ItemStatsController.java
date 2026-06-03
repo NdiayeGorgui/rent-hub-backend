@@ -62,9 +62,14 @@ public class ItemStatsController {
     @GetMapping("/internal/stats")
     public ItemStatsDto getStats() {
 
-        return new ItemStatsDto(
-                itemRepository.countAllItems(),
-                itemRepository.countActiveItems()
-        );
+            ItemStatsDto stats = new ItemStatsDto(
+                    itemRepository.count(),
+                    itemRepository.countActiveItems()
+            );
+
+            System.out.println("📦 ITEM STATS = " + stats);
+
+            return stats;
+
     }
 }

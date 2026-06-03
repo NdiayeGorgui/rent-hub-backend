@@ -117,10 +117,14 @@ public class AdminStatsService {
         ).join();
 
         ItemStatsDto itemStats = itemStatsFuture.join();
+        System.out.println("AUTH RECEIVED DISPUTE = " + itemStats);
         RentalStatsDto rentalStats = rentalStatsFuture.join();
         ReviewStatsDto reviewStats = reviewStatsFuture.join();
+        System.out.println("AUTH RECEIVED DISPUTE = " + reviewStats);
         DisputeStats disputeStats = disputeStatsFuture.join();
+        System.out.println("AUTH RECEIVED DISPUTE = " + disputeStats);
         AuctionStats auctionStats = auctionStatsFuture.join();
+        System.out.println("AUTH RECEIVED DISPUTE = " + auctionStats);
         SubscriptionStats subscriptionStats = subscriptionStatsFuture.join();
         PaymentStats paymentStats = paymentStatsFuture.join();
 
