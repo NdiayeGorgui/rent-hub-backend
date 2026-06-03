@@ -63,8 +63,8 @@ public class ItemStatsController {
     public ItemStatsDto getStats() {
 
         return new ItemStatsDto(
-                itemRepository.count(),
-                itemRepository.countByActiveTrue()
+                itemRepository.countAllItems(),
+                itemRepository.countActiveItems()
         );
     }
 }

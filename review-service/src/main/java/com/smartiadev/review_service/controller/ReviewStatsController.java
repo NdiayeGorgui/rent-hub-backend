@@ -66,7 +66,7 @@ public class ReviewStatsController {
     @GetMapping("/internal/stats")
     public ReviewStatsDto getStats() {
 
-        Long total = reviewRepository.count();
+        Long total = reviewRepository.countAllReviews();
         Double avg = reviewRepository.getPlatformAverageRating();
 
         return new ReviewStatsDto(
