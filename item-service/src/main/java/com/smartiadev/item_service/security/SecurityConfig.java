@@ -42,7 +42,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/items/stats/public/**"
                         ).permitAll()
-
+                        .requestMatchers(
+                                "/api/admin/items/stats/internal/stats"
+                        ).permitAll()
                         // 🔐 routes sécurisées
                         .requestMatchers(
                                 "/api/items/**",

@@ -63,7 +63,7 @@ public class ReviewStatsController {
         return reviewStatsService.getPlatformAverageRating();
     }
 
-    @GetMapping("/internal/stats/internal/stats")
+    @GetMapping("/internal/stats")
     public ReviewStatsDto getStats() {
 
         Long total = reviewRepository.countAllReviews();

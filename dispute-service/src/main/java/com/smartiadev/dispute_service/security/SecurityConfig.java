@@ -37,6 +37,9 @@ public class SecurityConfig {
                         // 🔐 ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/users/internal/**").permitAll()
+                        .requestMatchers(
+                                "/api/admin/disputes/stats/internal/stats"
+                        ).permitAll()
 
                         // 🔐 REST authentifié pour les autres endpoints
                         .requestMatchers("/api/disputes/**").authenticated()
