@@ -59,7 +59,7 @@ public class ItemStatsController {
         return itemStatsService.countPublishedItems();
     }
 
-    @GetMapping
+    @GetMapping("/internal/stats")
     public ItemStatsDto getStats() {
 
         return new ItemStatsDto(

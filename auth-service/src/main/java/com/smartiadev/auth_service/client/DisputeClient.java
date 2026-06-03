@@ -8,6 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 @FeignClient(name = "dispute-service", configuration = FeignAuthConfig.class)
 public interface DisputeClient {
 
-    @GetMapping("/api/admin/disputes/stats")
+    @GetMapping("/api/admin/disputes/stats/internal/stats")
     DisputeStats getDisputeStats();
 }

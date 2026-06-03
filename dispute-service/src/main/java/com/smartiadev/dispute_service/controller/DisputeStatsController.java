@@ -36,7 +36,7 @@ public class DisputeStatsController {
             @ApiResponse(responseCode = "403", description = "Forbidden - Administrator role required"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    @GetMapping
+    @GetMapping("/internal/stats")
     public DisputeStats stats() {
         return service.getStats();
     }

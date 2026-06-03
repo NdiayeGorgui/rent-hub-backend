@@ -24,6 +24,6 @@ public interface ItemClient {
     @GetMapping("/api/admin/items/stats/count/published")
     Long countPublishedItems();
 
-    @GetMapping("/api/admin/items/stats")
+    @GetMapping("/api/admin/items/stats/internal/stats")
     ItemStatsDto getStats();
 }
