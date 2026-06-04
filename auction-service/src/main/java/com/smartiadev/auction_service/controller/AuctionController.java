@@ -205,4 +205,11 @@ public class AuctionController {
 
         return ResponseEntity.ok(auction);
     }
+
+    @PostMapping("/internal/by-items")
+    public List<AuctionDto> getAuctionsByItemIds(
+            @RequestBody List<Long> itemIds
+    ) {
+        return service.getAuctionsByItemIds(itemIds);
+    }
 }

@@ -573,4 +573,20 @@ public class AuctionService {
         return map(auction);
     }
 
+    public List<AuctionDto> getAuctionsByItemIds(
+            List<Long> itemIds
+    ) {
+
+        return auctionRepository.findByItemIdIn(itemIds)
+                .stream()
+                .map(auction -> AuctionDto.builder()
+                        .id(auction.getId())
+                        .itemId(auction.getItemId())
+                        .currentPrice(auction.getCurrentPrice())
+                        .endDate(auction.getEndDate())
+                        .status(auction.getStatus().name())
+                        .build()
+                )
+                .toList();
+    }
 }

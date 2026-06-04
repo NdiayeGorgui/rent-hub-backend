@@ -1,6 +1,7 @@
 package com.smartiadev.subscription_service.controller;
 
 import com.smartiadev.subscription_service.dto.PremiumStatusResponse;
+import com.smartiadev.subscription_service.dto.PremiumUserStatusDto;
 import com.smartiadev.subscription_service.service.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -12,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -91,6 +93,13 @@ public class SubscriptionController {
             @PathVariable UUID userId
     ) {
         return service.getPremiumStatus(userId);
+    }
+
+    @PostMapping("/internal/statuses")
+    public List<PremiumUserStatusDto> getPremiumStatuses(
+            @RequestBody List<UUID> userIds
+    ) {
+        return service.getPremiumStatuses(userIds);
     }
 
 }

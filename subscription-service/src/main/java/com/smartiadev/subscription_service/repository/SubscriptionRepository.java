@@ -36,5 +36,7 @@ public interface SubscriptionRepository
 
 
     List<Subscription> findByEndDateBeforeAndAutoRenewTrue(LocalDateTime date);
+
+    List<Subscription> findByUserIdIn(List<UUID> userIds);
 }
 

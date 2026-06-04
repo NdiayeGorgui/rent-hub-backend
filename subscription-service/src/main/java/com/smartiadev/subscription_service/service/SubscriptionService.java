@@ -3,6 +3,7 @@ package com.smartiadev.subscription_service.service;
 import com.smartiadev.base_domain_service.dto.PaymentCompletedEvent;
 import com.smartiadev.base_domain_service.model.PaymentType;
 import com.smartiadev.subscription_service.dto.PremiumStatusResponse;
+import com.smartiadev.subscription_service.dto.PremiumUserStatusDto;
 import com.smartiadev.subscription_service.entity.Subscription;
 import com.smartiadev.subscription_service.entity.SubscriptionStatus;
 import com.smartiadev.subscription_service.kafka.SubscriptionEventPublisher;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -136,4 +138,33 @@ public class SubscriptionService {
         });
     }
 
+    public List<PremiumUserStatusDto> getPremiumStatuses(
+            List<UUID> userIds
+    ) {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Subscription> subscriptions =
+                repository.findByUserIdIn(userIds);
+
+        return subscriptions.stream()
+                .map(subscription -> {
+
+                    boolean premium =
+                            subscription.getEndDate() != null
+                                    && subscription.getEndDate().isAfter(now);
+
+                    boolean gracePeriod =
+                            !premium
+                                    && subscription.getEndDate() != null
+                                    && subscription.getEndDate().plusDays(7).isAfter(now);
+
+                    return new PremiumUserStatusDto(
+                            subscription.getUserId(),
+                            premium,
+                            gracePeriod
+                    );
+                })
+                .toList();
+    }
 }

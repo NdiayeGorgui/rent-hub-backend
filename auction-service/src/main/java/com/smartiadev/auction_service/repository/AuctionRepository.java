@@ -61,4 +61,7 @@ Long countByStatus(AuctionStatus status);
 
     List<Auction> findByOwnerId(UUID ownerId);
 
+    List<Auction> findByItemIdIn(
+            List<Long> itemIds
+    );
 }

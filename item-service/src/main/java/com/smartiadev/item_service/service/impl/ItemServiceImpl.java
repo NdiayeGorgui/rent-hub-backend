@@ -13,6 +13,7 @@ import com.smartiadev.item_service.service.ImageStorageService;
 import com.smartiadev.item_service.service.ItemService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,24 +22,55 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+
 public class ItemServiceImpl implements ItemService {
 
-    private final ItemRepository repository;
-    private final ReviewClient reviewClient;
-    private final RentalClient rentalClient;
-    private final AuthClient authClient;
-    private final SubscriptionClient subscriptionClient;
-    private final AuctionClient  auctionClient;
-    private final ImageStorageService imageStorageService;
-   // private static final String ITEM_SERVICE_BASE_URL = "http://localhost:8080"; // gateway
-   @Value("${app.public.base-url}")
-   private String publicBaseUrl;
-    private final ObjectMapper objectMapper;
-    private final GeocodingService geocodingService;
+
+        private final ItemRepository repository;
+        private final ReviewClient reviewClient;
+        private final RentalClient rentalClient;
+        private final AuthClient authClient;
+        private final SubscriptionClient subscriptionClient;
+        private final AuctionClient auctionClient;
+        private final ImageStorageService imageStorageService;
+        private final ObjectMapper objectMapper;
+        private final GeocodingService geocodingService;
+        private final Executor taskExecutor;
+
+        @Value("${app.public.base-url}")
+        private String publicBaseUrl;
+
+        public ItemServiceImpl(
+                ItemRepository repository,
+                ReviewClient reviewClient,
+                RentalClient rentalClient,
+                AuthClient authClient,
+                SubscriptionClient subscriptionClient,
+                AuctionClient auctionClient,
+                ImageStorageService imageStorageService,
+                ObjectMapper objectMapper,
+                GeocodingService geocodingService,
+                @Qualifier("applicationTaskExecutor") Executor taskExecutor
+        ) {
+            this.repository = repository;
+            this.reviewClient = reviewClient;
+            this.rentalClient = rentalClient;
+            this.authClient = authClient;
+            this.subscriptionClient = subscriptionClient;
+            this.auctionClient = auctionClient;
+            this.imageStorageService = imageStorageService;
+            this.objectMapper = objectMapper;
+            this.geocodingService = geocodingService;
+            this.taskExecutor = taskExecutor;
+        }
+
+
     /* =====================
        CREATE ITEM
        ===================== */
@@ -603,70 +635,159 @@ public class ItemServiceImpl implements ItemService {
 
         List<Item> items = repository.findAll();
 
-        return items.stream().map(item -> {
+        List<UUID> userIds =
+                items.stream()
+                        .map(Item::getOwnerId)
+                        .distinct()
+                        .toList();
 
-            // AUTH SERVICE
-            UserProfileInternalDto user =
-                    authClient.getUserProfile(item.getOwnerId());
+        List<Long> auctionItemIds =
+                items.stream()
+                        .filter(i -> i.getType() == ItemType.AUCTION)
+                        .map(Item::getId)
+                        .toList();
 
-            // SUBSCRIPTION SERVICE
-            PremiumStatusResponse premium =
-                    subscriptionClient.getPremiumStatus(item.getOwnerId());
+        CompletableFuture<List<UserProfileInternalDto>> usersFuture =
+                CompletableFuture.supplyAsync(
+                        () -> authClient.getProfiles(userIds),
+                        taskExecutor
+                );
 
-            Double currentPrice = null;
+        CompletableFuture<List<PremiumUserStatusDto>> premiumFuture =
+                CompletableFuture.supplyAsync(
+                        () -> subscriptionClient.getPremiumStatuses(userIds),
+                        taskExecutor
+                );
 
-            // AUCTION SERVICE
-            if (item.getType() == ItemType.AUCTION) {
+        CompletableFuture<List<AuctionDto>> auctionsFuture =
+                CompletableFuture.supplyAsync(
+                        () -> auctionClient.getAuctionsByItemIds(auctionItemIds),
+                        taskExecutor
+                );
 
-                try {
+
+        CompletableFuture.allOf(
+                usersFuture,
+                premiumFuture,
+                auctionsFuture
+        ).join();
+
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                usersFuture.join()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserProfileInternalDto::getUserId,
+                                Function.identity()
+                        ));
+
+
+        Map<UUID, PremiumUserStatusDto> premiumMap =
+                premiumFuture.join()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                PremiumUserStatusDto::userId,
+                                Function.identity()
+                        ));
+
+        Map<Long, AuctionDto> auctionsMap =
+                auctionsFuture.join()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                AuctionDto::itemId,
+                                Function.identity()
+                        ));
+        return items.stream()
+                .map(item -> {
+
+                    UserProfileInternalDto user =
+                            usersMap.get(item.getOwnerId());
+
+                    PremiumUserStatusDto premium =
+                            premiumMap.get(item.getOwnerId());
 
                     AuctionDto auction =
-                            auctionClient.getAuctionByItemId(item.getId());
+                            auctionsMap.get(item.getId());
 
-                    if (auction != null) {
-                        currentPrice = auction.currentPrice();
-                    }
+                    Double currentPrice =
+                            auction != null
+                                    ? auction.currentPrice()
+                                    : null;
 
-                } catch (Exception ignored) {}
+                    return AdminItemDto.builder()
 
-            }
+                            .itemId(item.getId())
+                            .title(item.getTitle())
+                            .description(item.getDescription())
 
-            return AdminItemDto.builder()
+                            .city(item.getCity())
+                            .address(item.getAddress())
 
-                    .itemId(item.getId())
-                    .title(item.getTitle())
-                    .description(item.getDescription())
+                            .pricePerDay(item.getPricePerDay())
+                            .active(item.getActive())
 
-                    .city(item.getCity())
-                    .address(item.getAddress())
+                            .type(item.getType().name())
 
-                    .pricePerDay(item.getPricePerDay())
-                    .active(item.getActive())
+                            .imageUrls(item.getImageUrls())
 
-                    .type(item.getType().name())
+                            .userId(
+                                    user != null
+                                            ? user.getUserId()
+                                            : null
+                            )
 
-                    .imageUrls(item.getImageUrls())
+                            .username(
+                                    user != null
+                                            ? user.getUsername()
+                                            : null
+                            )
 
-                    // publisher
-                    .userId(user.getUserId())
-                    .username(user.getUsername())
-                    .fullName(user.getFullName())
-                    .publisherCity(user.getCity())
+                            .fullName(
+                                    user != null
+                                            ? user.getFullName()
+                                            : null
+                            )
 
-                    .averageRating(user.getAverageRating())
-                    .reviewsCount(user.getReviewsCount())
-                    .badge(user.getBadge())
+                            .publisherCity(
+                                    user != null
+                                            ? user.getCity()
+                                            : null
+                            )
 
-                    // subscription
-                    .premium(premium.premium())
-                    .gracePeriod(premium.gracePeriod())
+                            .averageRating(
+                                    user != null
+                                            ? user.getAverageRating()
+                                            : null
+                            )
 
-                    // auction
-                    .currentPrice(currentPrice)
+                            .reviewsCount(
+                                    user != null
+                                            ? user.getReviewsCount()
+                                            : null
+                            )
 
-                    .build();
+                            .badge(
+                                    user != null
+                                            ? user.getBadge()
+                                            : null
+                            )
 
-        }).toList();
+                            .premium(
+                                    premium != null
+                                            && premium.premium()
+                            )
+
+                            .gracePeriod(
+                                    premium != null
+                                            && premium.gracePeriod()
+                            )
+
+                            .currentPrice(currentPrice)
+
+                            .build();
+
+                })
+                .toList();
     }
 
     @Override
