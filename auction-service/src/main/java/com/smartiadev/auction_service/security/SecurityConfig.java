@@ -2,6 +2,7 @@ package com.smartiadev.auction_service.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -36,6 +37,8 @@ public class SecurityConfig {
                         // 🔓 API public (si tu as des endpoints publics, sinon retire)
                         //.requestMatchers("/api/disputes/public/**").permitAll()
 
+                        .requestMatchers(HttpMethod.POST, "/api/auctions/internal/by-items").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/auctions/**").authenticated()
                         // 🔐 ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 

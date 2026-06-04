@@ -3,6 +3,7 @@ package com.smartiadev.auth_service.security;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -52,6 +53,8 @@ public class SecurityConfig {
                         // 🔓 Autoriser OPTIONS pour CORS
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/profile/internal/batch").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/profile/**").authenticated()
 
                         .anyRequest().authenticated()
                 )

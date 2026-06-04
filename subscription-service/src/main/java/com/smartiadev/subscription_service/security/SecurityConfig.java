@@ -2,6 +2,7 @@ package com.smartiadev.subscription_service.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/admin/subscriptions/stats/internal/stats"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/subscriptions/internal/statuses").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/subscriptions/**").authenticated()
 
                         // 🔐 ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
