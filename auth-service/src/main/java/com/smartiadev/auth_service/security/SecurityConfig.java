@@ -53,8 +53,9 @@ public class SecurityConfig {
                         // 🔓 Autoriser OPTIONS pour CORS
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**")
                         .permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/profile/internal/batch").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/profile/**").authenticated()
+                        .requestMatchers(
+                                "/api/profile/internal/**"
+                        ).permitAll()
 
                         .anyRequest().authenticated()
                 )

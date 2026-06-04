@@ -40,8 +40,9 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/admin/subscriptions/stats/internal/stats"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/subscriptions/internal/statuses").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/subscriptions/**").authenticated()
+                        .requestMatchers(
+                                "/api/subscriptions/internal/**"
+                        ).permitAll()
 
                         // 🔐 ADMIN
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
