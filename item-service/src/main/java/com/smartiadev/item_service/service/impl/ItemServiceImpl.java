@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -519,39 +520,92 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() ->
                         new RuntimeException("Item not found"));
 
-        // 2️⃣ Rating de l’item
-        Double itemRating = reviewClient.getAverageRatingForItem(itemId);
-        Double safeItemRating = itemRating != null ? itemRating : 0.0;
+        // 2️⃣ Appels parallèles
+        CompletableFuture<Double> ratingFuture =
+                CompletableFuture.supplyAsync(
+                        () -> reviewClient.getAverageRatingForItem(itemId),
+                        taskExecutor
+                ).exceptionally(ex -> {
+                    System.err.println("❌ Rating error: " + ex.getMessage());
+                    return 0.0;
+                });
 
-        // 3️⃣ Publisher (ownerId)
-        UserProfileInternalDto user = authClient.getUserProfile(item.getOwnerId());
+        CompletableFuture<UserProfileInternalDto> userFuture =
+                CompletableFuture.supplyAsync(
+                        () -> authClient.getUserProfile(item.getOwnerId()),
+                        taskExecutor
+                ).exceptionally(ex -> {
+                    System.err.println("❌ User profile error: " + ex.getMessage());
+
+                    UserProfileInternalDto fallback =
+                            new UserProfileInternalDto();
+
+                    fallback.setUserId(item.getOwnerId());
+                    fallback.setUsername("Unknown");
+                    fallback.setFullName("Unknown");
+                    fallback.setCity("");
+                    fallback.setAverageRating(0.0);
+                    fallback.setReviewsCount(0L);
+                    fallback.setBadge(null);
+
+                    return fallback;
+                });
+
+        CompletableFuture<Void> all =
+                CompletableFuture.allOf(
+                        ratingFuture,
+                        userFuture
+                );
+
+        all.orTimeout(2, TimeUnit.SECONDS).join();
+
+        // 3️⃣ Résultats
+        Double safeItemRating = ratingFuture.join();
+
+        UserProfileInternalDto user =
+                userFuture.join();
+
+        // 4️⃣ Publisher
         PublisherDto publisher = PublisherDto.builder()
                 .userId(user.getUserId())
                 .username(user.getUsername())
                 .fullName(user.getFullName())
                 .city(user.getCity())
-                .averageRating(user.getAverageRating() != null ? user.getAverageRating() : 0.0)
-                .reviewsCount(user.getReviewsCount() != null ? user.getReviewsCount() : 0L)
+                .averageRating(
+                        user.getAverageRating() != null
+                                ? user.getAverageRating()
+                                : 0.0
+                )
+                .reviewsCount(
+                        user.getReviewsCount() != null
+                                ? user.getReviewsCount()
+                                : 0L
+                )
                 .badge(user.getBadge())
                 .build();
 
-        // 4️⃣ Composition finale
-        ItemDetailsDto.ItemDetailsDtoBuilder builder = ItemDetailsDto.builder()
-                .itemId(item.getId())
-                .title(item.getTitle())
-                .description(item.getDescription())
-                .categoryId(item.getCategoryId())
-                .city(item.getCity())
-                .address(item.getAddress())
-                .imageUrls(item.getImageUrls())
-                .active(item.getActive())
-                .createdAt(item.getCreatedAt())
-                .updatedAt(item.getUpdatedAt())
-                .type(item.getType())
-                .averageRating(safeItemRating)
-                .publisher(publisher);
+        // 5️⃣ Construction DTO
+        ItemDetailsDto.ItemDetailsDtoBuilder builder =
+                ItemDetailsDto.builder()
+                        .itemId(item.getId())
+                        .title(item.getTitle())
+                        .description(item.getDescription())
+                        .categoryId(item.getCategoryId())
+                        .city(item.getCity())
+                        .address(item.getAddress())
+                        .imageUrls(item.getImageUrls())
+                        .active(item.getActive())
+                        .createdAt(item.getCreatedAt())
+                        .updatedAt(item.getUpdatedAt())
+                        .type(item.getType())
+                        .averageRating(
+                                safeItemRating != null
+                                        ? safeItemRating
+                                        : 0.0
+                        )
+                        .publisher(publisher);
 
-        // Ajouter pricePerDay uniquement si type RENTAL
+        // 6️⃣ Prix seulement pour RENTAL
         if (item.getType() == ItemType.RENTAL) {
             builder.pricePerDay(item.getPricePerDay());
         }
