@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,6 +48,9 @@ AND (:ratedItemIds IS NULL OR i.id IN :ratedItemIds)
     // 📢 items publiés (visibles)
     @Query("SELECT COUNT(i) FROM Item i WHERE i.active = true")
     Long countActiveItems();
+
+    Long countByActiveFalse();
+    Long countByCreatedAtAfter(LocalDateTime date);
 
     List<Item> findByOwnerIdAndStatusNot(UUID ownerId, ItemStatus status);
     List<Item> findByStatus(ItemStatus status);

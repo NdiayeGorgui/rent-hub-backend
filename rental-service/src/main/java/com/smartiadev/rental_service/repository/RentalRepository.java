@@ -99,5 +99,12 @@ AND r.endDate >= :startDate
 """)
     Long getTotalDaysRented(Long itemId);
 
+    Long countByStatus(RentalStatus status);
 
+    @Query("""
+       select count(r)
+       from Rental r
+       where r.status in ('CREATED','APPROVED')
+       """)
+    Long countPendingRentals();
 }

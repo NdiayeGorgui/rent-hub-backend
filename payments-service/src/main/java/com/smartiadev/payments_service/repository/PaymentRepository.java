@@ -71,5 +71,21 @@ public interface PaymentRepository
             PaymentStatus status,
             LocalDateTime deadline
     );
+
+    @Query("""
+    SELECT COALESCE(
+        SUM(
+            CASE
+                WHEN p.type = com.smartiadev.base_domain_service.model.PaymentType.AUCTION_REFUND
+                    THEN -p.amount
+                ELSE p.amount
+            END
+        ),
+        0
+    )
+    FROM Payment p
+    WHERE p.status = com.smartiadev.base_domain_service.model.PaymentStatus.SUCCESS
+""")
+    Double calculateNetRevenue();
 }
 

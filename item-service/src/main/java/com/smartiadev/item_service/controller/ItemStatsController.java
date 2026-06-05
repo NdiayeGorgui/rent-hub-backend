@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/api/admin/items/stats")
 @RequiredArgsConstructor
@@ -61,10 +63,16 @@ public class ItemStatsController {
 
     @GetMapping("/internal/stats")
     public ItemStatsDto getStats() {
+        Long newItemsLast30Days =
+                itemRepository.countByCreatedAtAfter(
+                        LocalDateTime.now().minusDays(30));
 
             ItemStatsDto stats = new ItemStatsDto(
                     itemRepository.count(),
-                    itemRepository.countActiveItems()
+                    itemRepository.countActiveItems(),
+                    itemRepository.countByActiveFalse(),
+                    newItemsLast30Days
+
             );
 
             System.out.println("📦 ITEM STATS = " + stats);

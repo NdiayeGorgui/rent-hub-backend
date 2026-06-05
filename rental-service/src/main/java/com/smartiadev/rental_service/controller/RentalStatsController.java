@@ -1,6 +1,7 @@
 package com.smartiadev.rental_service.controller;
 
 import com.smartiadev.rental_service.dto.RentalStatsDto;
+import com.smartiadev.rental_service.entity.RentalStatus;
 import com.smartiadev.rental_service.repository.RentalRepository;
 import com.smartiadev.rental_service.service.RentalStatsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -90,11 +91,17 @@ public class RentalStatsController {
         Long total = rentalRepository.count();
         Long active = rentalRepository.countActiveRentals();
         Double revenue = rentalRepository.getTotalRevenue();
+        Long completedRentals =
+                rentalRepository.countByStatus(RentalStatus.ENDED);
+        Long pendingRentals =
+                rentalRepository.countPendingRentals();
 
         return new RentalStatsDto(
                 total,
                 active,
-                revenue != null ? revenue : 0.0
+                revenue != null ? revenue : 0.0,
+                pendingRentals,
+                completedRentals
         );
     }
 }

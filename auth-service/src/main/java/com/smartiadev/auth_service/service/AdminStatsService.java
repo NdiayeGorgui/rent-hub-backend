@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -64,17 +65,22 @@ public class AdminStatsService {
 
         Long totalUsers = userRepository.count();
         Long activeUsers = userRepository.countActiveUsers();
+        Long inactiveUsers = userRepository.countInactiveUsers();
+        Long newUsersLast30Days =
+                userRepository.countByCreatedAtAfter(
+                        LocalDateTime.now().minusDays(30)
+                );
 
         CompletableFuture<ItemStatsDto> itemStatsFuture =
                 CompletableFuture.supplyAsync(itemClient::getStats, taskExecutor ).exceptionally(ex -> {
                     System.out.println("❌ ItemStats failed: " + ex.getMessage());
-                    return new ItemStatsDto(0L, 0L);
+                    return new ItemStatsDto(0L, 0L,0L,0L);
                 });
 
         CompletableFuture<RentalStatsDto> rentalStatsFuture =
                 CompletableFuture.supplyAsync(rentalClient::getStats, taskExecutor).exceptionally(ex -> {
                     System.out.println("❌ ItemStats failed: " + ex.getMessage());
-                    return new RentalStatsDto(0L, 0L,0.0);
+                    return new RentalStatsDto(0L, 0L,0.0,0L,0L);
                 });
         CompletableFuture<ReviewStatsDto> reviewStatsFuture =
                 CompletableFuture.supplyAsync(reviewClient::getStats, taskExecutor).exceptionally(ex -> {
@@ -103,7 +109,7 @@ public class AdminStatsService {
         CompletableFuture<PaymentStats> paymentStatsFuture =
                 CompletableFuture.supplyAsync(paymentClient::getStats, taskExecutor).exceptionally(ex -> {
                     System.out.println("❌ ItemStats failed: " + ex.getMessage());
-                    return new PaymentStats(0L, 0L,0L,0L,0.0);
+                    return new PaymentStats(0L, 0L,0L,0L,0.0,0.0);
                 });
 
         CompletableFuture.allOf(
@@ -131,7 +137,9 @@ public class AdminStatsService {
         return new AdminStats(
                 totalUsers,
                 activeUsers,
-                itemStats != null ? itemStats : new ItemStatsDto(0L, 0L),
+                inactiveUsers,
+                newUsersLast30Days,
+                itemStats != null ? itemStats : new ItemStatsDto(0L, 0L,0L,0L),
                 rentalStats,
                 reviewStats != null ? reviewStats : new ReviewStatsDto(0L, 0.0),
                 auctionStats,
