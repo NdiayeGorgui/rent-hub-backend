@@ -20,7 +20,7 @@ public class PaymentStatsService {
                 repository.countByStatus(PaymentStatus.FAILED),
                 repository.countByStatus(PaymentStatus.PENDING),
                 repository.sumSuccessfulPayments(),
-                repository.calculateNetRevenue()
+                repository.sumRefundPayments()
         );
     }
 }

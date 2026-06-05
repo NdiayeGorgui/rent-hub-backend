@@ -85,5 +85,12 @@ public interface PaymentRepository
     WHERE p.status = com.smartiadev.base_domain_service.model.PaymentStatus.SUCCESS
 """)
     Double calculateNetRevenue();
+
+    @Query("""
+    SELECT COALESCE(SUM(p.amount), 0)
+    FROM Payment p
+    WHERE p.type = com.smartiadev.base_domain_service.model.PaymentType.AUCTION_REFUND
+    """)
+    Double sumRefundPayments();
 }
 

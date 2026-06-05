@@ -6,6 +6,6 @@ public record PaymentStats(
         Long failedPayments,
         Long pendingPayments,
         Double totalAmount,
-        Double netRevenue
+        Double refundPayments
 ) {}
 
