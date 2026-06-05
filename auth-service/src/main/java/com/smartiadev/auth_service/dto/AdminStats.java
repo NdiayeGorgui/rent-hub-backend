@@ -5,8 +5,8 @@ public record AdminStats(
         // 👤 USERS (reste simple)
         Long totalUsers,
         Long activeUsers,
-        Long iactiveUsers,
-        Long newUsers,
+        Long inactiveUsers,
+        Long newUsersLast30Days,
 
         // 📦 STATS MICROSERVICES
         ItemStatsDto itemStats,
