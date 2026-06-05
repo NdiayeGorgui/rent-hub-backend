@@ -7,6 +7,7 @@ import org.hibernate.sql.results.graph.FetchList;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,11 +23,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT COUNT(u) FROM User u WHERE u.enabled = true")
     Long countActiveUsers();
 
-    @Query("""
-       select count(u)
-       from User u
-       where u.enabled = false
-       """)
+    @Query("SELECT COUNT(u) FROM User u WHERE u.enabled = false")
     Long countInactiveUsers();
 
     @Query("""
@@ -36,7 +33,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
        """)
     Long countRestrictedUsers();
 
-    long countByCreatedAtAfter(LocalDateTime date);
+    @Query("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :date")
+    Long countNewUsersLast30Days(@Param("date") LocalDateTime date);
 
     List<User> findByRolesContaining(String role);
 

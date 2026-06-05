@@ -67,7 +67,7 @@ public class AdminStatsService {
         Long activeUsers = userRepository.countActiveUsers();
         Long inactiveUsers = userRepository.countInactiveUsers();
         Long newUsersLast30Days =
-                userRepository.countByCreatedAtAfter(
+                userRepository.countNewUsersLast30Days(
                         LocalDateTime.now().minusDays(30)
                 );
 
