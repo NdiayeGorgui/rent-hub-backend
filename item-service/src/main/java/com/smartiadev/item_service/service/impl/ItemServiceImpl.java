@@ -131,9 +131,37 @@ public class ItemServiceImpl implements ItemService {
        ===================== */
     @Override
     public List<ItemResponseDTO> findAllActive() {
-        return repository.findByStatus(ItemStatus.ACTIVE)
-                .stream()
-                .map(this::map)
+
+        List<Item> items = repository.findByStatus(ItemStatus.ACTIVE);
+
+        List<UUID> userIds = items.stream()
+                .map(Item::getOwnerId)
+                .distinct()
+                .toList();
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                Optional.ofNullable(authClient.getProfiles(userIds))
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserProfileInternalDto::getUserId,
+                                Function.identity(),
+                                (a, b) -> a
+                        ));
+
+        return items.stream()
+                .map(item -> {
+
+                    UserProfileInternalDto user =
+                            usersMap.get(item.getOwnerId());
+
+                    String username =
+                            user != null
+                                    ? user.getUsername()
+                                    : null;
+
+                    return map(item, username);
+                })
                 .toList();
     }
 
