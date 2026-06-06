@@ -29,4 +29,5 @@ public class ItemResponseDTO {
     private Boolean active;
     private ItemStatus status;
     private LocalDateTime createdAt;
+    private String username;
 }

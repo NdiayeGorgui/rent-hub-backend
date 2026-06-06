@@ -15,4 +15,5 @@ public class ItemSearchResponseDto {
     private Double averageRating; // ⭐ NOUVEAU
     private String type;
     private String imageUrl;
+    private String username;
 }

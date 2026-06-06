@@ -305,9 +305,6 @@ public class ItemController {
     }
 
 
-
-
-
     @PostMapping(value = "/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ItemResponseDTO> createWithImages(
             @RequestPart("data") String data,

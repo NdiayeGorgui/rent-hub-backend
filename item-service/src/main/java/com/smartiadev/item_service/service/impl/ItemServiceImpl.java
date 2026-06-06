@@ -218,9 +218,38 @@ public class ItemServiceImpl implements ItemService {
                 item.getImageUrls(),
                 item.getActive(),
                 item.getStatus(),
-                item.getCreatedAt()
+                item.getCreatedAt(),
+                null
+
         );
     }
+
+    private ItemResponseDTO map(
+            Item item,
+            String username
+    ) {
+
+        return new ItemResponseDTO(
+                item.getId(),
+                item.getOwnerId(),
+                item.getTitle(),
+                item.getDescription(),
+                item.getCategoryId(),
+                item.getType(),
+                item.getPricePerDay(),
+                item.getCity(),
+                item.getLatitude(),
+                item.getLongitude(),
+                item.getAddress(),
+                item.getImageUrls(),
+                item.getActive(),
+                item.getStatus(),
+                item.getCreatedAt(),
+                username
+        );
+    }
+
+
    /* public ItemDetailsDto getItemDetails(Long itemId) {
 
         Double avgRating = reviewClient.getAverageRatingForItem(itemId);
@@ -456,6 +485,21 @@ public class ItemServiceImpl implements ItemService {
        ========================= */
         Page<Item> itemsPage =
                 repository.findAll(spec, pageable);
+        List<UUID> userIds =
+                itemsPage.getContent()
+                        .stream()
+                        .map(Item::getOwnerId)
+                        .distinct()
+                        .toList();
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                authClient.getProfiles(userIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserProfileInternalDto::getUserId,
+                                Function.identity()
+                        ));
+
 
     /* =========================
        5️⃣ RÉCUPÉRATION RATINGS
@@ -467,11 +511,20 @@ public class ItemServiceImpl implements ItemService {
        6️⃣ MAPPING DTO
        ========================= */
         return itemsPage.map(item -> {
+
             String imageUrl = null;
+
             if (item.getImageUrls() != null && !item.getImageUrls().isEmpty()) {
-                // Ici on prend la première image et on préfixe avec l'URL du gateway
-                imageUrl = publicBaseUrl  + item.getImageUrls().get(0);
+                imageUrl = publicBaseUrl + item.getImageUrls().get(0);
             }
+
+            UserProfileInternalDto user =
+                    usersMap.get(item.getOwnerId());
+
+            String username =
+                    user != null
+                            ? user.getUsername()
+                            : null;
 
             return new ItemSearchResponseDto(
                     item.getId(),
@@ -481,7 +534,8 @@ public class ItemServiceImpl implements ItemService {
                     item.getPricePerDay(),
                     ratings.getOrDefault(item.getId(), 0.0),
                     item.getType().name(),
-                    imageUrl
+                    imageUrl,
+                    username
             );
         });
     }
@@ -930,17 +984,52 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemSummaryWithDistanceDto> getNearbyItems(double lat, double lng, double radiusKm) {
-        return repository.findAll()
+        List<Item> items = repository.findAll()
                 .stream()
                 .filter(item -> item.getLatitude() != null && item.getLongitude() != null)
                 .filter(item -> item.getStatus() == ItemStatus.ACTIVE)
+                .toList();
+
+        List<UUID> userIds =
+                items.stream()
+                        .map(Item::getOwnerId)
+                        .distinct()
+                        .toList();
+
+        Map<UUID, UserProfileInternalDto> usersMap =
+                authClient.getProfiles(userIds)
+                        .stream()
+                        .collect(Collectors.toMap(
+                                UserProfileInternalDto::getUserId,
+                                Function.identity()
+                        ));
+        return items.stream()
                 .map(item -> {
-                    double distance = calculateDistance(lat, lng, item.getLatitude(), item.getLongitude());
-                    return new ItemSummaryWithDistanceDto(item, distance);
+
+                    double distance =
+                            calculateDistance(
+                                    lat,
+                                    lng,
+                                    item.getLatitude(),
+                                    item.getLongitude()
+                            );
+
+                    UserProfileInternalDto user =
+                            usersMap.get(item.getOwnerId());
+
+                    return new ItemSummaryWithDistanceDto(
+                            item,
+                            distance,
+                            user != null
+                                    ? user.getUsername()
+                                    : null
+                    );
                 })
                 .filter(dto -> dto.getDistanceKm() <= radiusKm)
-                .sorted(Comparator.comparingDouble(ItemSummaryWithDistanceDto::getDistanceKm))
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparingDouble(
+                        ItemSummaryWithDistanceDto::getDistanceKm
+                ))
+                .toList();
     }
 
     @Override

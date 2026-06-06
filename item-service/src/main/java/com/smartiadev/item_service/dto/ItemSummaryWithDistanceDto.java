@@ -18,8 +18,9 @@ public class ItemSummaryWithDistanceDto {
     private List<String> imageUrls;
     private Double distanceKm;
     private String distanceLabel; // "environ 1 km", "moins de 500 m"
+    private String username;
 
-    public ItemSummaryWithDistanceDto(Item item, double distanceKm) {
+    public ItemSummaryWithDistanceDto(Item item, double distanceKm, String username) {
         this.id = item.getId();
         this.title = item.getTitle();
         this.description = item.getDescription();
@@ -29,6 +30,8 @@ public class ItemSummaryWithDistanceDto {
         this.imageUrls = item.getImageUrls();
         this.distanceKm = distanceKm;
         this.distanceLabel = formatDistance(distanceKm);
+        this.username = username;
+
     }
 
     private String formatDistance(double km) {
