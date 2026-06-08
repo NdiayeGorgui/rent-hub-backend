@@ -17,7 +17,8 @@ public class AuctionFeePaidConsumer {
     private final AuctionRepository auctionRepository;
 
     @KafkaListener(
-            topics = "auction.fee.paid"
+            topics = "auction.fee.paid",
+            groupId = "auction-service"
     )
     public void onAuctionFeePaid(AuctionFeePaidEvent event) {
 
