@@ -18,8 +18,7 @@ public class ItemAuctionCreatedConsumer {
     private final AuctionRepository auctionRepository;
 
     @KafkaListener(
-            topics = "item.auction.created",
-            groupId = "auction-service-v1"
+            topics = "item.auction.created"
     )
     @Transactional
     public void onItemAuctionCreated(ItemAuctionCreatedEvent event) {
