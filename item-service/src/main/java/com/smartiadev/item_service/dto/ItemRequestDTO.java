@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -31,7 +32,8 @@ public class ItemRequestDTO {
     private Double longitude;
 
     private String address;
-
-   // @NotNull
-   // private List<String> imageUrls;
+    // ← Nouveaux champs pour auction
+    Double startPrice;
+    Double reservePrice;
+    LocalDateTime auctionEndDate;
 }

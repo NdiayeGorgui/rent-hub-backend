@@ -1,11 +1,13 @@
 package com.smartiadev.item_service.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartiadev.base_domain_service.dto.ItemAuctionCreatedEvent;
 import com.smartiadev.item_service.client.*;
 import com.smartiadev.item_service.dto.*;
 import com.smartiadev.item_service.entity.Item;
 import com.smartiadev.item_service.entity.ItemStatus;
 import com.smartiadev.item_service.entity.ItemType;
+import com.smartiadev.item_service.kafka.ItemEventPublisher;
 import com.smartiadev.item_service.repository.ItemRepository;
 import com.smartiadev.item_service.repository.specification.ItemSpecifications;
 import com.smartiadev.item_service.service.GeocodingService;
@@ -32,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class ItemServiceImpl implements ItemService {
 
-
+        private final ItemEventPublisher eventPublisher;
         private final ItemRepository repository;
         private final ReviewClient reviewClient;
         private final RentalClient rentalClient;
@@ -48,6 +50,7 @@ public class ItemServiceImpl implements ItemService {
         private String publicBaseUrl;
 
         public ItemServiceImpl(
+                ItemEventPublisher eventPublisher,
                 ItemRepository repository,
                 ReviewClient reviewClient,
                 RentalClient rentalClient,
@@ -59,6 +62,7 @@ public class ItemServiceImpl implements ItemService {
                 GeocodingService geocodingService,
                 @Qualifier("applicationTaskExecutor") Executor taskExecutor
         ) {
+            this.eventPublisher = eventPublisher;
             this.repository = repository;
             this.reviewClient = reviewClient;
             this.rentalClient = rentalClient;
@@ -752,6 +756,19 @@ public class ItemServiceImpl implements ItemService {
                 .build();
 
         Item saved = repository.save(item);
+
+        // ← Publie event Kafka si AUCTION
+        if (dto.getType() == ItemType.AUCTION) {
+            eventPublisher.publishAuctionCreated(
+                    new ItemAuctionCreatedEvent(
+                            saved.getId(),
+                            ownerId,
+                            dto.getStartPrice(),
+                            dto.getReservePrice(),
+                            dto.getAuctionEndDate()
+                    )
+            );
+        }
 
         return map(saved);
     }

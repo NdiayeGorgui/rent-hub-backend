@@ -1,5 +1,6 @@
 package com.smartiadev.item_service.kafka;
 
+import com.smartiadev.base_domain_service.dto.AuctionFeePaidEvent;
 import com.smartiadev.base_domain_service.dto.PaymentCompletedEvent;
 import com.smartiadev.base_domain_service.model.PaymentStatus;
 import com.smartiadev.base_domain_service.model.PaymentType;
@@ -20,6 +21,7 @@ public class PaymentCompletedConsumer {
 
     private final ItemRepository repository;
     private final PaymentClient paymentClient;
+    private final AuctionEventPublisher auctionEventPublisher;
 
     @KafkaListener(
             topics = "payment.completed",
@@ -50,10 +52,17 @@ public class PaymentCompletedConsumer {
 
         Item item = optionalItem.get();
 
-        item.setStatus(ItemStatus.DRAFT);
+        item.setStatus(ItemStatus.ACTIVE);
         item.setActive(true);
 
         repository.save(item);
+
+        auctionEventPublisher.publishAuctionFeePaid(
+                new AuctionFeePaidEvent(
+                        item.getId()
+                )
+        );
+
 
         log.info("Item activated: {}", item.getId());
     }

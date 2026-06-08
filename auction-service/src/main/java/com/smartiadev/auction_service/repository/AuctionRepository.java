@@ -19,6 +19,8 @@ public interface AuctionRepository extends JpaRepository<Auction, Long> {
             LocalDateTime date
     );
 
+    boolean existsByItemId(Long itemId);
+
 // stats
 Long countByStatus(AuctionStatus status);
 
