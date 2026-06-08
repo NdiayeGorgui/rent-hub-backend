@@ -473,11 +473,11 @@ public class PaymentService {
                 break;
 
             case AUCTION_FEE:
-                kafkaTemplate.send(
+                /*kafkaTemplate.send(
                         "auction.fee.paid",
                         payment.getItemId().toString(),
                         payment
-                );
+                );*/
                 break;
 
             case SUBSCRIPTION:
