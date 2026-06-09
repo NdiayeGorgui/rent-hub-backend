@@ -153,6 +153,16 @@ public class ItemServiceImpl implements ItemService {
                                 (a, b) -> a
                         ));
 
+        List<Long> rentalItemIds = items.stream()
+                .filter(item -> item.getType() == ItemType.RENTAL)
+                .map(Item::getId)
+                .toList();
+
+        Map<Long, RentalStatsResponse> rentalStats =
+                rentalItemIds.isEmpty()
+                        ? Collections.emptyMap()
+                        : rentalClient.getStatsByItems(rentalItemIds);
+
         return items.stream()
                 .map(item -> {
 
@@ -164,7 +174,17 @@ public class ItemServiceImpl implements ItemService {
                                     ? user.getUsername()
                                     : null;
 
-                    return map(item, username);
+                    Long rentalsCount = 0L;
+
+                    if (item.getType() == ItemType.RENTAL) {
+                        rentalsCount = Optional.ofNullable(
+                                        rentalStats.get(item.getId())
+                                )
+                                .map(RentalStatsResponse::rentalsCount)
+                                .orElse(0L);
+                    }
+
+                    return map(item, username, rentalsCount);
                 })
                 .toList();
     }
@@ -251,14 +271,16 @@ public class ItemServiceImpl implements ItemService {
                 item.getActive(),
                 item.getStatus(),
                 item.getCreatedAt(),
-                null
+                null,
+                0L
 
         );
     }
 
     private ItemResponseDTO map(
             Item item,
-            String username
+            String username,
+            Long rentalsCount
     ) {
 
         return new ItemResponseDTO(
@@ -277,7 +299,8 @@ public class ItemServiceImpl implements ItemService {
                 item.getActive(),
                 item.getStatus(),
                 item.getCreatedAt(),
-                username
+                username,
+                rentalsCount
         );
     }
 
@@ -872,6 +895,15 @@ public class ItemServiceImpl implements ItemService {
                                 AuctionDto::itemId,
                                 Function.identity()
                         ));
+        List<Long> rentalItemIds = items.stream()
+                .filter(item -> item.getType() == ItemType.RENTAL)
+                .map(Item::getId)
+                .toList();
+
+        Map<Long, RentalStatsResponse> rentalStats =
+                rentalItemIds.isEmpty()
+                        ? Collections.emptyMap()
+                        : rentalClient.getStatsByItems(rentalItemIds);
         return items.stream()
                 .map(item -> {
 
@@ -1070,6 +1102,17 @@ public class ItemServiceImpl implements ItemService {
                                 UserProfileInternalDto::getUserId,
                                 Function.identity()
                         ));
+
+        List<Long> rentalItemIds = items.stream()
+                .filter(item -> item.getType() == ItemType.RENTAL)
+                .map(Item::getId)
+                .toList();
+
+        Map<Long, RentalStatsResponse> rentalStats =
+                rentalItemIds.isEmpty()
+                        ? Collections.emptyMap()
+                        : rentalClient.getStatsByItems(rentalItemIds);
+
         return items.stream()
                 .map(item -> {
 
@@ -1084,12 +1127,23 @@ public class ItemServiceImpl implements ItemService {
                     UserProfileInternalDto user =
                             usersMap.get(item.getOwnerId());
 
+                    Long rentalsCount = 0L;
+
+                    if (item.getType() == ItemType.RENTAL) {
+                        rentalsCount = Optional.ofNullable(
+                                        rentalStats.get(item.getId())
+                                )
+                                .map(RentalStatsResponse::rentalsCount)
+                                .orElse(0L);
+                    }
+
                     return new ItemSummaryWithDistanceDto(
                             item,
                             distance,
                             user != null
                                     ? user.getUsername()
-                                    : null
+                                    : null,
+                            rentalsCount
                     );
                 })
                 .filter(dto -> dto.getDistanceKm() <= radiusKm)
