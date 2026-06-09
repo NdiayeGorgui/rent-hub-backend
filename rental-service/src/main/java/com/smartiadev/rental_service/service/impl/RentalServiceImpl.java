@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -535,6 +536,16 @@ public class RentalServiceImpl implements RentalService {
                 owner != null ? owner.getUsername() : null,
                 renter != null ? renter.getUsername() : null
         );
+    }
+
+    @Override
+    public Map<Long, RentalStatsResponse> getRentalStatsByItems(List<Long> itemIds) {
+
+        return itemIds.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        this::getRentalStatsByItem
+                ));
     }
 
 }

@@ -27,12 +27,24 @@ public class ItemAuctionCreatedConsumer {
             return;
         }
 
+        Double reservePrice = event.reservePrice();
+
+        if (reservePrice == null || reservePrice <= 0) {
+            reservePrice = event.startPrice();
+        }
+
+        if (reservePrice < event.startPrice()) {
+            throw new IllegalArgumentException(
+                    "Reserve price must be greater than or equal to start price"
+            );
+        }
+
         Auction auction = Auction.builder()
                 .itemId(event.itemId())
                 .ownerId(event.ownerId())
                 .startPrice(event.startPrice())
                 .currentPrice(event.startPrice())
-                .reservePrice(event.reservePrice())
+                .reservePrice(reservePrice)
                 .views(0)
                 .watchers(0)
                 .startDate(LocalDateTime.now())

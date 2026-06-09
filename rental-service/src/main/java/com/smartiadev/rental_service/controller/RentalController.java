@@ -18,6 +18,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -187,6 +188,15 @@ public class RentalController {
     ) {
         return ResponseEntity.ok(
                 service.getRentalStatsByItem(itemId)
+        );
+    }
+
+    @PostMapping("/stats/items")
+    public ResponseEntity<Map<Long, RentalStatsResponse>> getStatsByItems(
+            @RequestBody List<Long> itemIds
+    ) {
+        return ResponseEntity.ok(
+                service.getRentalStatsByItems(itemIds)
         );
     }
 

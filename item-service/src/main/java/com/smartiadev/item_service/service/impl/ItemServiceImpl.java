@@ -539,6 +539,17 @@ public class ItemServiceImpl implements ItemService {
         Map<Long, Double> ratings =
                 reviewClient.getItemsRatings();
 
+        List<Long> rentalItemIds = itemsPage.getContent()
+                .stream()
+                .filter(item -> item.getType() == ItemType.RENTAL)
+                .map(Item::getId)
+                .toList();
+
+        Map<Long, RentalStatsResponse> rentalStats =
+                rentalItemIds.isEmpty()
+                        ? Collections.emptyMap()
+                        : rentalClient.getStatsByItems(rentalItemIds);
+
     /* =========================
        6️⃣ MAPPING DTO
        ========================= */
@@ -558,6 +569,16 @@ public class ItemServiceImpl implements ItemService {
                             ? user.getUsername()
                             : null;
 
+            Long rentalsCount = 0L;
+
+            if (item.getType() == ItemType.RENTAL) {
+                rentalsCount = Optional.ofNullable(
+                                rentalStats.get(item.getId())
+                        )
+                        .map(RentalStatsResponse::rentalsCount)
+                        .orElse(0L);
+            }
+
             return new ItemSearchResponseDto(
                     item.getId(),
                     item.getTitle(),
@@ -567,7 +588,8 @@ public class ItemServiceImpl implements ItemService {
                     ratings.getOrDefault(item.getId(), 0.0),
                     item.getType().name(),
                     imageUrl,
-                    username
+                    username,
+                    rentalsCount
             );
         });
     }

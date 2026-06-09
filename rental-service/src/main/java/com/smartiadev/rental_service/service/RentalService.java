@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface RentalService {
@@ -22,4 +23,5 @@ public interface RentalService {
     List<Long> findUnavailableItemIds(LocalDate startDate, LocalDate endDate);
     List<ItemSummaryDto> getRentedItems(UUID userId);
     RentalStatsResponse getRentalStatsByItem(Long itemId);
+    Map<Long, RentalStatsResponse> getRentalStatsByItems(List<Long> itemIds);
 }
