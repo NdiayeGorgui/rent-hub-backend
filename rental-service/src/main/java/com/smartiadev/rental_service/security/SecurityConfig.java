@@ -24,6 +24,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/rentals/internal/**",
                                 "/v3/api-docs/**"
                                 ).permitAll()
+                        .requestMatchers("/api/rentals/stats/items").permitAll()
                         // 🔓 Autoriser OPTIONS pour CORS
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
