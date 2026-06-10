@@ -26,6 +26,7 @@ public class ItemDetailsDto {
     private ItemType type;
 
     private Double averageRating;
+    private Long rentalsCount;
 
     private PublisherDto publisher;
 }

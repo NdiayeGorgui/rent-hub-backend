@@ -681,11 +681,36 @@ public class ItemServiceImpl implements ItemService {
 
                     return fallback;
                 });
+        CompletableFuture<Long> rentalsCountFuture =
+                CompletableFuture.supplyAsync(
+                        () -> {
+                            Map<Long, RentalStatsResponse> stats =
+                                    rentalClient.getStatsByItems(
+                                            List.of(itemId)
+                                    );
+
+                            RentalStatsResponse response =
+                                    stats.get(itemId);
+
+                            return response != null
+                                    ? response.rentalsCount()
+                                    : 0L;
+                        },
+                        taskExecutor
+                ).exceptionally(ex -> {
+                    System.err.println(
+                            "❌ Rental stats error: "
+                                    + ex.getMessage()
+                    );
+
+                    return 0L;
+                });
 
         CompletableFuture<Void> all =
                 CompletableFuture.allOf(
                         ratingFuture,
-                        userFuture
+                        userFuture,
+                        rentalsCountFuture
                 );
 
         all.orTimeout(2, TimeUnit.SECONDS).join();
@@ -695,6 +720,8 @@ public class ItemServiceImpl implements ItemService {
 
         UserProfileInternalDto user =
                 userFuture.join();
+
+        Long rentalsCount = rentalsCountFuture.join();
 
         // 4️⃣ Publisher
         PublisherDto publisher = PublisherDto.builder()
@@ -733,6 +760,11 @@ public class ItemServiceImpl implements ItemService {
                                 safeItemRating != null
                                         ? safeItemRating
                                         : 0.0
+                        )
+                        .rentalsCount(
+                                rentalsCount != null
+                                        ? rentalsCount
+                                        : 0L
                         )
                         .publisher(publisher);
 
