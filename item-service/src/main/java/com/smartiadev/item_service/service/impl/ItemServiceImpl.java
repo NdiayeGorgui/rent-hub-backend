@@ -682,20 +682,15 @@ public class ItemServiceImpl implements ItemService {
                     return fallback;
                 });
         CompletableFuture<Long> rentalsCountFuture =
-                CompletableFuture.supplyAsync(
-                        () -> {
-                            Map<Long, RentalStatsResponse> stats =
-                                    rentalClient.getStatsByItems(
-                                            List.of(itemId)
-                                    );
-
-                            RentalStatsResponse response =
-                                    stats.get(itemId);
-
-                            return response != null
-                                    ? response.rentalsCount()
-                                    : 0L;
-                        },
+                item.getType() == ItemType.RENTAL
+                        ? CompletableFuture.supplyAsync(
+                        () -> Optional.ofNullable(
+                                        rentalClient.getStatsByItems(
+                                                List.of(itemId)
+                                        ).get(itemId)
+                                )
+                                .map(RentalStatsResponse::rentalsCount)
+                                .orElse(0L),
                         taskExecutor
                 ).exceptionally(ex -> {
                     System.err.println(
@@ -704,7 +699,8 @@ public class ItemServiceImpl implements ItemService {
                     );
 
                     return 0L;
-                });
+                })
+                        : CompletableFuture.completedFuture(0L);
 
         CompletableFuture<Void> all =
                 CompletableFuture.allOf(
