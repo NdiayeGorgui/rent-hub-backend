@@ -11,13 +11,6 @@ load_dotenv()
 
 app = FastAPI(title="Gonifty AI Service", version="1.0.0")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 CATEGORIES = {
