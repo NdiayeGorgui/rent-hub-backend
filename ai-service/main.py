@@ -111,21 +111,29 @@ Génère UNIQUEMENT la description, sans introduction ni explication."""
 def suggest_price(request: SuggestPriceRequest):
     category_name = CATEGORIES.get(request.category_id, "Autre")
 
-    prompt = f"""Tu es un expert du marché de la location entre particuliers au Québec.
+    # ← Contexte selon le type
+    if request.item_type == "AUCTION":
+        type_context = "mise aux enchères (prix de départ)"
+        price_context = "prix de départ d'enchère, pas un prix de location journalier"
+    else:
+        type_context = "location par jour entre particuliers"
+        price_context = "prix de location par jour"
 
-Suggère un prix de location par jour pour cet item :
+    prompt = f"""Tu es un expert du marché québécois de la location et des enchères entre particuliers.
+
+Suggère un prix pour cet item :
 
 - Titre : {request.title}
 - Catégorie : {category_name}
+- Type : {type_context}
 
 Réponds UNIQUEMENT avec ce format JSON exact, sans aucun texte avant ou après :
 {{
   "min_price": <nombre>,
   "max_price": <nombre>,
   "recommended_price": <nombre>,
-  "reasoning": "<explication courte en français de 1-2 phrases>"
+  "reasoning": "<explication courte en français de 1-2 phrases mentionnant que c'est un {price_context}>"
 }}"""
-
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
