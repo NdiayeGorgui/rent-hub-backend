@@ -118,6 +118,8 @@ public class SecurityConfig {
                                 "/api/auctions/**",
                                 "/api/messages/**"
                         ).authenticated()
+                        // Les endpoints IA nécessitent auth (user connecté pour générer)
+                        .pathMatchers("/api/ai/**").authenticated()
 
                         .anyExchange().authenticated()
                 )

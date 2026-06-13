@@ -199,6 +199,12 @@ spring:
           predicates:
             - Path=/ws-chat/**
 
+        # Dans les routes du gateway
+        - id: ai-service
+          uri: http://ai-service:8190
+          predicates:
+            - Path=/api/ai/**
+
 server:
   port: 9191
 

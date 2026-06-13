@@ -1,3 +1,4 @@
 .idea/
 .env
+ai-service/.env
 renthub/values-secret.yaml

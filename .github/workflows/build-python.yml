@@ -1,0 +1,40 @@
+name: Build and Push AI Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ai-service/**'   # ← déclenché SEULEMENT si ai-service change
+  pull_request:
+    paths:
+      - 'ai-service/**'
+
+jobs:
+  build-and-push-ai:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Login Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 3️⃣ Build & Push
+      - name: Build and Push AI Service
+        run: |
+          IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/ai-service:latest"
+          
+          echo "🔹 Build de ai-service"
+          docker build -t $IMAGE_NAME ./ai-service
+          
+          echo "📤 Push de $IMAGE_NAME"
+          docker push $IMAGE_NAME
+
+          echo "✅ ai-service pushed successfully"
