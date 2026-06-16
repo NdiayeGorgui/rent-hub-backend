@@ -607,6 +607,7 @@ public class ItemServiceImpl implements ItemService {
                     item.getTitle(),
                     item.getDescription(),
                     item.getCity(),
+                    item.getAddress(),
                     item.getPricePerDay(),
                     ratings.getOrDefault(item.getId(), 0.0),
                     item.getType().name(),
