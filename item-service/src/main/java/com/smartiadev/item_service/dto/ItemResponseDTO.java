@@ -25,6 +25,7 @@ public class ItemResponseDTO {
     private Double latitude;
     private Double longitude;
     private String address;
+    private String postalCode;
     private List<String> imageUrls;
     private Boolean active;
     private ItemStatus status;

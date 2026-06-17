@@ -54,6 +54,9 @@ public class Item {
     @Column(length = 255)
     private String address;
 
+    @Column(length = 20)
+    private String postalCode;
+
     /**
      * Images (URLs S3)
      */

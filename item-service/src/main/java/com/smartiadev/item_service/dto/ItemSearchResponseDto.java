@@ -12,6 +12,7 @@ public class ItemSearchResponseDto {
     private String description;
     private String city;
     private String address;
+    private String postalCode;
     private Double pricePerDay;
     private Double averageRating; // ⭐ NOUVEAU
     private String type;

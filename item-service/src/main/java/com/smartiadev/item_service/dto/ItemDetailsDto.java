@@ -19,6 +19,7 @@ public class ItemDetailsDto {
     private Double pricePerDay;
     private String city;
     private String address;
+    private String postalCode;
     private List<String> imageUrls;
     private Boolean active;
     private LocalDateTime createdAt;

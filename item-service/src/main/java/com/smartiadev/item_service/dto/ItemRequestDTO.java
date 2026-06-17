@@ -32,6 +32,7 @@ public class ItemRequestDTO {
     private Double longitude;
 
     private String address;
+    private String postalCode;
     // ← Nouveaux champs pour auction
     Double startPrice;
     Double reservePrice;

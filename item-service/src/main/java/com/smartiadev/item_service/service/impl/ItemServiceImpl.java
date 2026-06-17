@@ -267,6 +267,7 @@ public class ItemServiceImpl implements ItemService {
                 item.getLatitude(),
                 item.getLongitude(),
                 item.getAddress(),
+                item.getPostalCode(),
                 item.getImageUrls(),
                 item.getActive(),
                 item.getStatus(),
@@ -295,6 +296,7 @@ public class ItemServiceImpl implements ItemService {
                 item.getLatitude(),
                 item.getLongitude(),
                 item.getAddress(),
+                item.getPostalCode(),
                 item.getImageUrls(),
                 item.getActive(),
                 item.getStatus(),
@@ -608,6 +610,7 @@ public class ItemServiceImpl implements ItemService {
                     item.getDescription(),
                     item.getCity(),
                     item.getAddress(),
+                    item.getPostalCode(),
                     item.getPricePerDay(),
                     ratings.getOrDefault(item.getId(), 0.0),
                     item.getType().name(),
@@ -748,6 +751,7 @@ public class ItemServiceImpl implements ItemService {
                         .categoryId(item.getCategoryId())
                         .city(item.getCity())
                         .address(item.getAddress())
+                        .postalCode(item.getPostalCode())
                         .imageUrls(item.getImageUrls())
                         .active(item.getActive())
                         .createdAt(item.getCreatedAt())
@@ -824,6 +828,7 @@ public class ItemServiceImpl implements ItemService {
                 .latitude(dto.getLatitude())
                 .longitude(dto.getLongitude())
                 .address(dto.getAddress())
+                .postalCode(dto.getPostalCode())
                 .imageUrls(imageUrls)
                 .status(itemStatus)
                 .active(active)
@@ -1051,6 +1056,7 @@ public class ItemServiceImpl implements ItemService {
         if (dto.categoryId() != null) item.setCategoryId(dto.categoryId());
         if (dto.city() != null) item.setCity(dto.city());
         if (dto.address() != null) item.setAddress(dto.address());
+        if (dto.postalCode() != null) item.setPostalCode(dto.postalCode());
         if (dto.latitude() != null) item.setLatitude(dto.latitude());
         if (dto.longitude() != null) item.setLongitude(dto.longitude());
         if (dto.pricePerDay() != null) item.setPricePerDay(dto.pricePerDay());

@@ -10,6 +10,7 @@ public record UpdateItemRequest(
         Double latitude,
         Double longitude,
         String address,
+        String postalCode,
         Double pricePerDay,
         String type,
         List<String> imageUrls

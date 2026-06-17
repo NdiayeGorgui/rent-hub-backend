@@ -16,6 +16,7 @@ public class ItemSummaryWithDistanceDto {
     private String type;
     private String city;
     private String address;
+    private String postalCode;
     private List<String> imageUrls;
     private Double distanceKm;
     private String distanceLabel; // "environ 1 km", "moins de 500 m"
@@ -30,6 +31,7 @@ public class ItemSummaryWithDistanceDto {
         this.type = item.getType().name();
         this.city = item.getCity();
         this.address = item.getAddress();
+        this.postalCode = item.getPostalCode();
         this.imageUrls = item.getImageUrls();
         this.distanceKm = distanceKm;
         this.distanceLabel = formatDistance(distanceKm);
