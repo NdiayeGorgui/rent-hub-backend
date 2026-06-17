@@ -963,6 +963,7 @@ public class ItemServiceImpl implements ItemService {
 
                             .city(item.getCity())
                             .address(item.getAddress())
+                            .postalCode(item.getPostalCode())
 
                             .pricePerDay(item.getPricePerDay())
                             .active(item.getActive())

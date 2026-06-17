@@ -16,6 +16,7 @@ public class AdminItemDto {
 
     private String city;
     private String address;
+    private String postalCode;
 
     private Double pricePerDay;
     private Boolean active;
