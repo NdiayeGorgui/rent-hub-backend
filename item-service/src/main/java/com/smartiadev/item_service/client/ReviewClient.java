@@ -27,7 +27,7 @@ public interface ReviewClient {
     @GetMapping("/api/reviews/items/ratings")
     Map<Long, Double> getItemsRatings();
 
-    @PostMapping("/internal/owners/stats")
+    @PostMapping("/api/reviews/internal/owners/stats")
     List<OwnerReviewStatsDto> getOwnersStats(
             @RequestBody List<UUID> ownerIds
     );
