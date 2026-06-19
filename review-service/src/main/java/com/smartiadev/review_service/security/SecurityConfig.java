@@ -37,6 +37,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers("/api/reviews/stats/public/**").permitAll()
                         .requestMatchers("/api/reviews/rental/**").permitAll()
+                        .requestMatchers("/api/reviews/internal/owners/**").permitAll()
                         .requestMatchers("/api/reviews/internal/users/**").permitAll()
                         .requestMatchers(
                                 "/api/admin/reviews/stats/internal/stats"
