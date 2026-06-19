@@ -19,4 +19,6 @@ public class ItemSearchResponseDto {
     private String imageUrl;
     private String username;
     private Long rentalsCount;
+    private Double ownerRating;
+    private Long ownerReviewsCount;
 }

@@ -129,6 +129,20 @@ public interface ReviewRepository
  List<Object[]> getUsersStats(
          @Param("userIds") List<UUID> userIds
  );
+
+ @Query("""
+SELECT
+    r.ownerId,
+    AVG(r.rating),
+    COUNT(r)
+FROM Review r
+WHERE r.ownerId IN :ownerIds
+AND r.type = com.smartiadev.review_service.entity.ReviewType.ITEM
+GROUP BY r.ownerId
+""")
+ List<Object[]> getOwnersStats(
+         @Param("ownerIds") List<UUID> ownerIds
+ );
 }
 
 

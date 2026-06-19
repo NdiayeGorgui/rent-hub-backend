@@ -14,10 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -90,6 +87,7 @@ public class ReviewService {
         Review review = Review.builder()
                 .rentalId(request.rentalId())
                 .itemId(rental.itemId())
+                .ownerId(rental.ownerId())
                 .reviewerId(reviewerId)
                 .reviewedUserId(reviewedUserId)
                 .rating(request.rating())
@@ -317,5 +315,23 @@ public class ReviewService {
                 count != null ? count : 0L
         );
     }
+    public List<OwnerReviewStatsDto> getOwnersStats(
+            List<UUID> ownerIds
+    ) {
 
+        List<Object[]> rows =
+                reviewRepository.getOwnersStats(ownerIds);
+
+        return rows.stream()
+                .map(row -> new OwnerReviewStatsDto(
+                        (UUID) row[0],
+                        row[1] != null
+                                ? ((Number) row[1]).doubleValue()
+                                : 0.0,
+                        row[2] != null
+                                ? ((Number) row[2]).longValue()
+                                : 0L
+                ))
+                .toList();
+    }
 }

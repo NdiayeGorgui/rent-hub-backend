@@ -22,8 +22,15 @@ public class ItemSummaryWithDistanceDto {
     private String distanceLabel; // "environ 1 km", "moins de 500 m"
     private String username;
     private Long rentalsCount;
+    private Double ownerRating;
+    private Long ownerReviewsCount;
 
-    public ItemSummaryWithDistanceDto(Item item, double distanceKm, String username, Long rentalsCount) {
+    public ItemSummaryWithDistanceDto(Item item,
+                                      double distanceKm,
+                                      String username,
+                                      Long rentalsCount,
+                                      Double ownerRating,
+                                      Long ownerReviewsCount) {
         this.id = item.getId();
         this.title = item.getTitle();
         this.description = item.getDescription();
@@ -37,6 +44,8 @@ public class ItemSummaryWithDistanceDto {
         this.distanceLabel = formatDistance(distanceKm);
         this.username = username;
         this.rentalsCount = rentalsCount;
+        this.ownerRating = ownerRating;
+        this.ownerReviewsCount = ownerReviewsCount;
 
     }
 

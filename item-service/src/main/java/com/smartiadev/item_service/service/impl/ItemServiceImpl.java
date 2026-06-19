@@ -153,6 +153,18 @@ public class ItemServiceImpl implements ItemService {
                                 (a, b) -> a
                         ));
 
+        Map<UUID, OwnerReviewStatsDto> ownerStatsMap =
+                Optional.ofNullable(
+                                reviewClient.getOwnersStats(userIds)
+                        )
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .collect(Collectors.toMap(
+                                OwnerReviewStatsDto::getOwnerId,
+                                Function.identity(),
+                                (a, b) -> a
+                        ));
+
         List<Long> rentalItemIds = items.stream()
                 .filter(item -> item.getType() == ItemType.RENTAL)
                 .map(Item::getId)
@@ -174,6 +186,19 @@ public class ItemServiceImpl implements ItemService {
                                     ? user.getUsername()
                                     : null;
 
+                    OwnerReviewStatsDto stats =
+                            ownerStatsMap.get(item.getOwnerId());
+
+                    Double ownerRating =
+                            stats != null
+                                    ? stats.getAverageRating()
+                                    : 0.0;
+
+                    Long ownerReviewsCount =
+                            stats != null
+                                    ? stats.getReviewsCount()
+                                    : 0L;
+
                     Long rentalsCount = 0L;
 
                     if (item.getType() == ItemType.RENTAL) {
@@ -184,7 +209,13 @@ public class ItemServiceImpl implements ItemService {
                                 .orElse(0L);
                     }
 
-                    return map(item, username, rentalsCount);
+                    return map(
+                            item,
+                            username,
+                            rentalsCount,
+                            ownerRating,
+                            ownerReviewsCount
+                    );
                 })
                 .toList();
     }
@@ -273,6 +304,8 @@ public class ItemServiceImpl implements ItemService {
                 item.getStatus(),
                 item.getCreatedAt(),
                 null,
+                0L,
+                0.0,
                 0L
 
         );
@@ -281,7 +314,9 @@ public class ItemServiceImpl implements ItemService {
     private ItemResponseDTO map(
             Item item,
             String username,
-            Long rentalsCount
+            Long rentalsCount,
+            Double ownerRating,
+            Long ownerReviewsCount
     ) {
 
         return new ItemResponseDTO(
@@ -302,7 +337,9 @@ public class ItemServiceImpl implements ItemService {
                 item.getStatus(),
                 item.getCreatedAt(),
                 username,
-                rentalsCount
+                rentalsCount,
+                ownerRating,
+                ownerReviewsCount
         );
     }
 
@@ -557,6 +594,17 @@ public class ItemServiceImpl implements ItemService {
                                 Function.identity()
                         ));
 
+        Map<UUID, OwnerReviewStatsDto> ownerStatsMap =
+                Optional.ofNullable(
+                                reviewClient.getOwnersStats(userIds)
+                        )
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .collect(Collectors.toMap(
+                                OwnerReviewStatsDto::getOwnerId,
+                                Function.identity(),
+                                (a, b) -> a
+                        ));
 
     /* =========================
        5️⃣ RÉCUPÉRATION RATINGS
@@ -594,6 +642,19 @@ public class ItemServiceImpl implements ItemService {
                             ? user.getUsername()
                             : null;
 
+            OwnerReviewStatsDto stats =
+                    ownerStatsMap.get(item.getOwnerId());
+
+            Double ownerRating =
+                    stats != null
+                            ? stats.getAverageRating()
+                            : 0.0;
+
+            Long ownerReviewsCount =
+                    stats != null
+                            ? stats.getReviewsCount()
+                            : 0L;
+
             Long rentalsCount = 0L;
 
             if (item.getType() == ItemType.RENTAL) {
@@ -616,7 +677,9 @@ public class ItemServiceImpl implements ItemService {
                     item.getType().name(),
                     imageUrl,
                     username,
-                    rentalsCount
+                    rentalsCount,
+                    ownerRating,
+                    ownerReviewsCount
             );
         });
     }
@@ -1139,6 +1202,18 @@ public class ItemServiceImpl implements ItemService {
                                 Function.identity()
                         ));
 
+        Map<UUID, OwnerReviewStatsDto> ownerStatsMap =
+                Optional.ofNullable(
+                                reviewClient.getOwnersStats(userIds)
+                        )
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .collect(Collectors.toMap(
+                                OwnerReviewStatsDto::getOwnerId,
+                                Function.identity(),
+                                (a, b) -> a
+                        ));
+
         List<Long> rentalItemIds = items.stream()
                 .filter(item -> item.getType() == ItemType.RENTAL)
                 .map(Item::getId)
@@ -1163,6 +1238,20 @@ public class ItemServiceImpl implements ItemService {
                     UserProfileInternalDto user =
                             usersMap.get(item.getOwnerId());
 
+                    OwnerReviewStatsDto stats =
+                            ownerStatsMap.get(item.getOwnerId());
+
+                    Double ownerRating =
+                            stats != null
+                                    ? stats.getAverageRating()
+                                    : 0.0;
+
+                    Long ownerReviewsCount =
+                            stats != null
+                                    ? stats.getReviewsCount()
+                                    : 0L;
+
+
                     Long rentalsCount = 0L;
 
                     if (item.getType() == ItemType.RENTAL) {
@@ -1179,7 +1268,9 @@ public class ItemServiceImpl implements ItemService {
                             user != null
                                     ? user.getUsername()
                                     : null,
-                            rentalsCount
+                            rentalsCount,
+                            ownerRating,
+                            ownerReviewsCount
                     );
                 })
                 .filter(dto -> dto.getDistanceKm() <= radiusKm)

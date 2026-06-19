@@ -33,6 +33,9 @@ public class Review {
     @Column(nullable = false)
     private Long itemId;
 
+    @Column(nullable = false)
+    private UUID ownerId;
+
     // 🔗 Auteur de l’avis
     @Column(nullable = false)
     private UUID reviewerId;

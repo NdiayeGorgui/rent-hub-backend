@@ -1,13 +1,14 @@
 package com.smartiadev.item_service.client;
 
+import com.smartiadev.item_service.dto.OwnerReviewStatsDto;
 import com.smartiadev.item_service.dto.ReviewDto;
+import com.smartiadev.item_service.dto.UserReviewStatsDto;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @FeignClient(name = "review-service")
 public interface ReviewClient {
@@ -25,5 +26,10 @@ public interface ReviewClient {
 
     @GetMapping("/api/reviews/items/ratings")
     Map<Long, Double> getItemsRatings();
+
+    @PostMapping("/internal/owners/stats")
+    List<OwnerReviewStatsDto> getOwnersStats(
+            @RequestBody List<UUID> ownerIds
+    );
 
 }

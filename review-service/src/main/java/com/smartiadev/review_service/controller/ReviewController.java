@@ -1,6 +1,7 @@
 package com.smartiadev.review_service.controller;
 
 import com.smartiadev.review_service.dto.CreateReviewRequest;
+import com.smartiadev.review_service.dto.OwnerReviewStatsDto;
 import com.smartiadev.review_service.dto.ReviewDto;
 import com.smartiadev.review_service.dto.UserReviewStatsDto;
 import com.smartiadev.review_service.entity.Review;
@@ -182,5 +183,11 @@ public class ReviewController {
         return reviewService.getUserStats(userId);
     }
 
+    @PostMapping("/internal/owners/stats")
+    public List<OwnerReviewStatsDto> getOwnersStats(
+            @RequestBody List<UUID> ownerIds
+    ) {
+        return reviewService.getOwnersStats(ownerIds);
+    }
 
 }

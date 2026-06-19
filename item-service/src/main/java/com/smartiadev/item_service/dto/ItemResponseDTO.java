@@ -32,4 +32,6 @@ public class ItemResponseDTO {
     private LocalDateTime createdAt;
     private String username;
     private Long rentalsCount;
+    private Double ownerRating;
+    private Long ownerReviewsCount;
 }
