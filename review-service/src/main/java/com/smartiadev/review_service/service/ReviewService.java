@@ -301,7 +301,7 @@ public class ReviewService {
                         reviewedIds::contains
                 ));
     }
-
+    // UserReviewStats
     public UserReviewStatsDto getUserStats(UUID userId) {
 
         Double rating =
