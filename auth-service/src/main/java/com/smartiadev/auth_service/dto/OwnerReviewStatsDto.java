@@ -1,0 +1,20 @@
+package com.smartiadev.auth_service.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class OwnerReviewStatsDto {
+
+    private UUID ownerId;
+
+    private Double ownerRating;
+
+    private Long ownerReviewsCount;
+
+}

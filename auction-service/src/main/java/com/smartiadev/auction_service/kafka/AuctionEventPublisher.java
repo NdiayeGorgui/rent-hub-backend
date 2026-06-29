@@ -4,6 +4,7 @@ package com.smartiadev.auction_service.kafka;
 import com.smartiadev.base_domain_service.dto.AuctionBidPlacedEvent;
 import com.smartiadev.base_domain_service.dto.AuctionCancellationRequestedEvent;
 import com.smartiadev.base_domain_service.dto.AuctionClosedEvent;
+import com.smartiadev.base_domain_service.dto.AuctionExpiredCleanupEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -29,5 +30,9 @@ public class AuctionEventPublisher {
                 String.valueOf(event.auctionId()), // key
                 event
         );
+    }
+
+    public void publishAuctionExpiredCleanup(AuctionExpiredCleanupEvent event) {
+        kafkaTemplate.send("auction.expired.cleanup", event);
     }
 }

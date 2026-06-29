@@ -1,5 +1,6 @@
 package com.smartiadev.item_service.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class LocalImageStorageService implements ImageStorageService {
 
     private final String uploadDir;
@@ -38,5 +40,19 @@ public class LocalImageStorageService implements ImageStorageService {
             }
         }
         return urls;
+    }
+
+    @Override
+    public void deleteImages(List<String> imageUrls) {
+        for (String url : imageUrls) {
+            try {
+                String filename = url.substring(url.lastIndexOf("/") + 1);
+                Path filePath = Paths.get(uploadDir, filename);
+                Files.deleteIfExists(filePath);
+                log.info("🗑️ Image supprimée: {}", filePath);
+            } catch (IOException e) {
+                log.error("Erreur suppression image {}: {}", url, e.getMessage());
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.smartiadev.auth_service.client;
 
 import com.smartiadev.auth_service.config.FeignAuthConfig;
+import com.smartiadev.auth_service.dto.OwnerReviewStatsDto;
 import com.smartiadev.auth_service.dto.ReviewStatsDto;
 import com.smartiadev.auth_service.dto.UserReviewStatsDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -39,6 +40,9 @@ public interface ReviewClient {
     @GetMapping("/api/admin/reviews/stats/internal/stats")
     ReviewStatsDto getStats();
 
-
+    @GetMapping("/api/reviews/internal/owners/{ownerId}/stats")
+    OwnerReviewStatsDto getOwnerStats(
+            @PathVariable UUID ownerId
+    );
 }
 

@@ -4,6 +4,7 @@ import com.smartiadev.auction_service.entity.Auction;
 import com.smartiadev.auction_service.entity.AuctionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -65,5 +66,12 @@ Long countByStatus(AuctionStatus status);
 
     List<Auction> findByItemIdIn(
             List<Long> itemIds
+    );
+
+
+    @Query("SELECT a FROM Auction a WHERE a.status IN :statuses AND a.endDate < :cutoff")
+    List<Auction> findExpiredForCleanup(
+            @Param("statuses") List<AuctionStatus> statuses,
+            @Param("cutoff") LocalDateTime cutoff
     );
 }

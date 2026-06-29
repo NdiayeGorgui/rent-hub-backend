@@ -7,5 +7,6 @@ import java.util.List;
 public interface ImageStorageService {
 
     List<String> uploadImages(List<MultipartFile> files);
+    void deleteImages(List<String> imageUrls);
 
 }

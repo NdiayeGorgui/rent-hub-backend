@@ -315,6 +315,8 @@ public class ReviewService {
                 count != null ? count : 0L
         );
     }
+
+
     public List<OwnerReviewStatsDto> getOwnersStats(
             List<UUID> ownerIds
     ) {
@@ -333,5 +335,20 @@ public class ReviewService {
                                 : 0L
                 ))
                 .toList();
+    }
+
+    public OwnerReviewStatsDto getOwnerStats(UUID ownerId) {
+
+        Double rating =
+                reviewRepository.getAverageRatingForOwner(ownerId);
+
+        Long count =
+                reviewRepository.countReviewsForOwner(ownerId);
+
+        return new OwnerReviewStatsDto(
+                ownerId,
+                rating != null ? rating : 0.0,
+                count != null ? count : 0L
+        );
     }
 }

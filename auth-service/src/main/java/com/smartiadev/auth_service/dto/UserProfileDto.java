@@ -24,6 +24,8 @@ public class UserProfileDto {
     // RÉPUTATION
     private Double averageRating;
     private Long reviewsCount;
+    private Double ownerRating;
+    private Long ownerReviewsCount;
     private String badge;
 
     // HISTORIQUE

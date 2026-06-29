@@ -39,8 +39,13 @@ public class ProfileService {
         // Fallbacks si les services ne répondent pas
         Double rating = 0.0;
         Long count = 0L;
+
+        Double ownerRating = 0.0;
+        Long ownerReviewsCount = 0L;
+
         List<ItemSummaryDto> publishedItems = new ArrayList<>();
         List<ItemSummaryDto> rentedItems = new ArrayList<>();
+
         boolean isPremium = false;
 
         try { rating = reviewClient.getAverageRatingForUser(userId); }
@@ -48,6 +53,21 @@ public class ProfileService {
 
         try { count = reviewClient.getReviewsCountForUser(userId); }
         catch (Exception e) { /* log warn */ }
+
+        try {
+
+            OwnerReviewStatsDto ownerStats =
+                    reviewClient.getOwnerStats(userId);
+
+            if(ownerStats != null){
+
+                ownerRating = ownerStats.getOwnerRating();
+                ownerReviewsCount = ownerStats.getOwnerReviewsCount();
+
+            }
+
+        }
+        catch(Exception ignored){}
 
         try { publishedItems = itemClient.getItemsPublishedByUser(userId); }
         catch (Exception e) { /* log warn */ }
@@ -70,6 +90,8 @@ public class ProfileService {
                 .premium(isPremium)
                 .averageRating(safeRating)
                 .reviewsCount(safeCount)
+                .ownerRating(ownerRating)
+                .ownerReviewsCount(ownerReviewsCount)
                 .badge(badge)
                 .publishedItems(publishedItems)
                 .rentedItems(rentedItems)

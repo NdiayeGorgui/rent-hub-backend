@@ -97,9 +97,10 @@ public class ReviewController {
         return reviewService.getAverageRatingForItem(itemId);
     }
 
+
     /* =====================
-      AVERAGE RATING FOR USER
-      ===================== */
+    AVERAGE RATING FOR USER ITEMS
+    ===================== */
     @Operation(
             summary = "Get average rating for a user",
             description = "Retrieve the average rating received by a user."
@@ -188,6 +189,13 @@ public class ReviewController {
             @RequestBody List<UUID> ownerIds
     ) {
         return reviewService.getOwnersStats(ownerIds);
+    }
+
+    @GetMapping("/internal/owners/{ownerId}/stats")
+    public OwnerReviewStatsDto getOwnerStats(
+            @PathVariable UUID ownerId
+    ) {
+        return reviewService.getOwnerStats(ownerId);
     }
 
 }

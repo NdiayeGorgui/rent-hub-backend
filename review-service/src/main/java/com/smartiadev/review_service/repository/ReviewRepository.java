@@ -143,6 +143,28 @@ GROUP BY r.ownerId
  List<Object[]> getOwnersStats(
          @Param("ownerIds") List<UUID> ownerIds
  );
+
+ @Query("""
+       SELECT AVG(r.rating)
+       FROM Review r
+       WHERE r.ownerId = :ownerId
+       AND r.type = com.smartiadev.review_service.entity.ReviewType.ITEM
+       """)
+ Double getAverageRatingForOwner(
+         @Param("ownerId") UUID ownerId
+ );
+
+ @Query("""
+       SELECT COUNT(r)
+       FROM Review r
+       WHERE r.ownerId = :ownerId
+       AND r.type = com.smartiadev.review_service.entity.ReviewType.ITEM
+       """)
+ Long countReviewsForOwner(
+         @Param("ownerId") UUID ownerId
+ );
 }
+
+
 
 
