@@ -59,10 +59,10 @@ public class ProfileService {
             OwnerReviewStatsDto ownerStats =
                     reviewClient.getOwnerStats(userId);
 
-            if(ownerStats != null){
+            if (ownerStats != null) {
 
-                ownerRating = ownerStats.getOwnerRating();
-                ownerReviewsCount = ownerStats.getOwnerReviewsCount();
+                ownerRating = ownerStats.getAverageRating();
+                ownerReviewsCount = ownerStats.getReviewsCount();
 
             }
 

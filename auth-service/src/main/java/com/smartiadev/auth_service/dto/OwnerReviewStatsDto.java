@@ -13,8 +13,8 @@ public class OwnerReviewStatsDto {
 
     private UUID ownerId;
 
-    private Double ownerRating;
+    private Double averageRating;
 
-    private Long ownerReviewsCount;
+    private Long reviewsCount;
 
 }
