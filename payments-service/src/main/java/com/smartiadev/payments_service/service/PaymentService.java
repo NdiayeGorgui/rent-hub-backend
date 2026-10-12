@@ -165,8 +165,9 @@ public class PaymentService {
     @Transactional
     public PaymentIntentResponse createRenewalPayment(UUID userId) throws StripeException {
 
-        double amount = 9.99;
+        //double amount = 9.99;
 
+        double amount = 0.0;
         PaymentIntent intent = createStripePaymentIntent(
                 userId,
                 amount,
