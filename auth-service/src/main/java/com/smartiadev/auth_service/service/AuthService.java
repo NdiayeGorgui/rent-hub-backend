@@ -65,7 +65,7 @@ public class AuthService {
     private void sendWelcomeEmail(User user) {
         try {
             SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom("team.smartiadev@gmail.com");
+            mail.setFrom("contact@gonifty.ca");
             mail.setTo(user.getEmail());
             mail.setSubject("Bienvenue sur Gonifty 🎉");
             mail.setText(
