@@ -12,6 +12,7 @@ import com.smartiadev.base_domain_service.dto.AuctionStrikeEvent;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -34,6 +35,8 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuctionEventPublisher auctionEventPublisher;
     private final JavaMailSender mailSender;
+    @Value("${MAIL_USERNAME}")
+    private String fromEmail;
 
     public AuthResponse register(RegisterRequest request) {
 
@@ -65,7 +68,7 @@ public class AuthService {
     private void sendWelcomeEmail(User user) {
         try {
             SimpleMailMessage mail = new SimpleMailMessage();
-            mail.setFrom("contact@gonifty.ca");
+            mail.setFrom(fromEmail);
             mail.setTo(user.getEmail());
             mail.setSubject("Bienvenue sur Gonifty 🎉");
             mail.setText(
@@ -210,7 +213,7 @@ public class AuthService {
         String resetLink = "https://app.gonifty.ca/reset-password?token=" + token;
 
         SimpleMailMessage mail = new SimpleMailMessage();
-        mail.setFrom("team.smartiadev@gmail.com");  // ← déjà fait ✅
+        mail.setFrom(fromEmail);  // ← déjà fait ✅
         mail.setTo(user.getEmail());
         mail.setSubject("Réinitialisation de votre mot de passe - Gonifty");
         mail.setText(
