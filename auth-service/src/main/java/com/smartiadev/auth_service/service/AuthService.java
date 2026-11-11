@@ -86,10 +86,14 @@ public class AuthService {
                             "L'équipe Gonifty"
             );
             mailSender.send(mail);
-        } catch (Exception e) {
-            // Ne pas bloquer l'inscription si le mail échoue
-            log.warn("Impossible d'envoyer le mail de bienvenue à {}", user.getEmail());
-        }
+        }  catch (Exception e) {
+        log.error(
+                "Erreur SMTP lors de l'envoi à {} : {}",
+                user.getEmail(),
+                e.getMessage(),
+                e
+        );
+    }
     }
 
     public AuthResponse login(LoginRequest request) {
